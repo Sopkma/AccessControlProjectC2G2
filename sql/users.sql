@@ -5,6 +5,7 @@ use users;
 CREATE TABLE users (
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    salt
     email    VARCHAR(255) NOT NULL,
     PRIMARY KEY (username)
 );
@@ -12,6 +13,7 @@ CREATE TABLE users (
 INSERT INTO users
 VALUES(
     "user",
-    "pass",
+    "pass", -- make bcrypt password with the salt and pepper
+    "hm84",
     "user@example.com"
 );
