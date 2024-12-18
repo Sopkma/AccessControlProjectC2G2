@@ -28,7 +28,7 @@ app.use("/", express.static("frontend"));
 
 app.get("/query", function (request, response) {
   let parsedBody = JSON.parse(request.body);
-  let SQL = "SElECT * FROM users;"
+  let SQL = "SELECT * FROM users;"
   connection.query(SQL, [true], (error, results, fields) => {
     if (error) {
       console.error(error.message);
