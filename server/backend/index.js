@@ -8,7 +8,7 @@ const HOST = String(process.env.HOST);
 const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
-const PEPPER = String(process.enc.PEPPER);
+const PEPPER = String(process.env.PEPPER);
 const SQL = "SELECT * FROM users;"
 
 const app = express();
@@ -27,7 +27,6 @@ app.use("/", express.static("frontend"));
 
 
 app.get("/query", function (request, response) {
-  let parsedBody = JSON.parse(request.body);
   let SQL = "SELECT * FROM users;"
   connection.query(SQL, [true], (error, results, fields) => {
     if (error) {
