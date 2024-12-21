@@ -45,24 +45,25 @@ app.post("/login", function (request, response) {
   if (!parsedBody.hasOwnProperty('username')) {
     console.log("Incomplete request");
     response.status(415).send("Incomplete Request");
+    return;
   }
-  let SQL = "SELECT * FROM users WHERE username=" + parsedBody["username"] + ";"
-  connection.query(SQL, [true], (error, results, fields) => {
+  let SQL = "SELECT * FROM users WHERE username=?;";
+  connection.query(SQL, parsedBody["username"], (error, results, fields) => {
     if (error) {
       console.error("Databasae Error:\n", error.message);
       response.status(500).send("Server Error");
     } else {
-      if (results.length = 0) {
+      if (results.length === 0) {
         console.log("User not found");
         response.status(401).send("Unauthorized");
       } else {
         let combinedPass = results[0]["salt"] + parsedBody["password"] + PEPPER;
-        bcrypt.compare(combinedPass, results[0]["password"], function(err, result) {
+        bcrypt.compare(combinedPass, results[0]["password"], function (err, result) {
           if (err) {
             console.log("Password mismatch");
             response.status(401).send("Unauthorized");
           } else {
-            console.log(parsedBody["username"] + " logged in" );
+            console.log(parsedBody["username"] + " logged in");
             response.status(200).send("Success");
           }
         });
