@@ -9,6 +9,7 @@ const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
 const PEPPER = String(process.env.PEPPER);
+const TOTP = String(process.env.TOTP);
 const SQL = "SELECT * FROM users;"
 
 const app = express();
@@ -72,5 +73,20 @@ app.post("/login", function (request, response) {
   });
 })
 
+app.get("/timey", function (request, response) {
+  let timestamp = (Date.now() / 1000) % 30;
+  let tobehashed = TOTP + timestamp;
+  console.log(tobehashed);
+  bcrypt.hash(tobehashed, 10, function (err, result) {
+    if (err) {
+      console.log("You did bad");
+
+    } else {
+      response.status(200).send(result);
+    }
+  });
+});
+
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
+
