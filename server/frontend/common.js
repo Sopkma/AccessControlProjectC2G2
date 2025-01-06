@@ -29,13 +29,13 @@ function login() {
     body: stringifiedbody
   })
     .then((resp) => {
-      if (resp.status = 500) {
+      if (resp.status === 500) {
         alert("Server Error");
-      } else if (resp.status = 401) {
+      } else if (resp.status === 401) {
         console.log("Username or password incorrect");
         alert("Username or password incorrect");
 
-      } else if (resp.status = 415) {
+      } else if (resp.status === 415) {
         console.log("Incomplete Request");
         alert("Incomplete Request");
       } else {
