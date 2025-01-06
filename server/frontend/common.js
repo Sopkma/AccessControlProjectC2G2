@@ -39,6 +39,39 @@ function login() {
         console.log("Incomplete Request");
         alert("Incomplete Request");
       } else {
+        location.href = "http://" + parsedUrl.host + "/2fac.html";
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+
+//PLACEHOLDER FOR TWOFACTOR LOGIC
+function twoFactor() {
+  let stringifiedbody = JSON.stringify({
+    username: document.getElementById("username").value,
+  })
+  console.log(stringifiedbody);
+  fetch("http://" + parsedUrl.host + "/login", {
+    method: "POST",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: stringifiedbody
+  })
+    .then((resp) => {
+      if (resp.status === 500) {
+        alert("Server Error");
+      } else if (resp.status === 401) {
+        console.log("Username or password incorrect");
+        alert("Username or password incorrect");
+
+      } else if (resp.status === 415) {
+        console.log("Incomplete Request");
+        alert("Incomplete Request");
+      } else {
         location.href = "http://" + parsedUrl.host + "/query.html";
       }
     })
