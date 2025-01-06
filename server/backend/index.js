@@ -74,7 +74,7 @@ app.post("/login", function (request, response) {
 })
 
 app.get("/timey", function (request, response) {
-  let timestamp = (Date.now() / 1000) % 30;
+  let timestamp = Math.round(Date.now() / (1000 * 60));
   let tobehashed = TOTP + timestamp;
   console.log(tobehashed);
   bcrypt.hash(tobehashed, 10, function (err, result) {
