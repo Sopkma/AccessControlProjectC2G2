@@ -53,7 +53,7 @@ function twoFactor() {
     username: document.getElementById("username").value,
   })
   console.log(stringifiedbody);
-  fetch("http://" + parsedUrl.host + "/login", {
+  fetch("http://" + parsedUrl.host + "/timey", {
     method: "POST",
     mode: "cors",
     headers: {

@@ -1,6 +1,7 @@
 const express = require("express");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
+const { createHash } = require('crypto');
 
 
 const PORT = String(process.env.PORT);
@@ -73,18 +74,37 @@ app.post("/login", function (request, response) {
   });
 })
 
-app.get("/timey", function (request, response) {
+
+//app.get("/timey", function (request, response) {
+//  let timestamp = Math.round(Date.now() / (1000 * 60));
+//  let tobehashed = TOTP + timestamp;
+//  let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
+//  response.status(200).send(hash);
+// return
+//});
+
+app.post("/timey", function (request, response) {
+  let parsedBody = request.body;
+  console.log(parsedBody);
+  if (!parsedBody.hasOwnProperty('secret')) {
+    console.log("Error: No secret provided");
+    response.status(415).send("Incomplete Request");
+    return;
+  }
+
   let timestamp = Math.round(Date.now() / (1000 * 60));
   let tobehashed = TOTP + timestamp;
-  console.log(tobehashed);
-  bcrypt.hash(tobehashed, 10, function (err, result) {
-    if (err) {
-      console.log("You did bad");
+  let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
 
-    } else {
-      response.status(200).send(result);
-    }
-  });
+  console.log(hash);
+  if (hash == parsedBody.secret) {
+    console.log("Valid Secret");
+    response.status(200).send("Success");
+    return;
+  } else {
+    response.status(400).send("Invalid Request");
+    return;
+  }
 });
 
 app.listen(PORT, HOST);
