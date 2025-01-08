@@ -55,7 +55,7 @@ function twoFactor() {
   console.log(stringifiedbody);
   fetch("http://" + parsedUrl.host + "/timey", {
     method: "POST",
-    mode: "no-cors",
+    mode: "cors",
     headers: {
       "Content-Type": "application/json"
     },
