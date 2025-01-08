@@ -92,6 +92,12 @@ app.post("/timey", function (request, response) {
     return;
   }
 
+  //const hmac = createHmac('sha256', '2025');
+  //var timestamp = new Date(Date.now());
+  //timestamp.setSeconds(30);
+  //timestamp.setMilliseconds(0);
+  //console.log(timestamp);
+
   let timestamp = Math.round(Date.now() / (1000 * 60));
   let tobehashed = TOTP + timestamp;
   let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);

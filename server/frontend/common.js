@@ -55,7 +55,7 @@ function twoFactor() {
   console.log(stringifiedbody);
   fetch("http://" + parsedUrl.host + "/timey", {
     method: "POST",
-    mode: "cors",
+    mode: "no-cors",
     headers: {
       "Content-Type": "application/json"
     },
@@ -65,8 +65,8 @@ function twoFactor() {
       if (resp.status === 500) {
         alert("Server Error");
       } else if (resp.status === 401) {
-        console.log("Username or password incorrect");
-        alert("Username or password incorrect");
+        console.log("TOTP code incorrect");
+        alert("TOTP code incorrect");
 
       } else if (resp.status === 415) {
         console.log("Incomplete Request");
