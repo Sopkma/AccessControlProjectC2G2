@@ -100,12 +100,8 @@ app.post("/timey", function (request, response) {
   console.log("timestamp: " + timestamp);
 
   //hmac.update(timestamp.toString());
-  //console.log(hmac.digest('hex'));
-
-  hmac.update(timestamp.toString());
-  let numberpattern = /\d+/g;
-  let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
-  console.log("this is the code:" + result);
+  //let numberpattern = /\d+/g;
+  //let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
 
   //let timestamp = Math.round(Date.now() / (1000 * 60));
   //let tobehashed = TOTP + timestamp;
