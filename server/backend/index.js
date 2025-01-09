@@ -99,8 +99,8 @@ app.post("/timey", function (request, response) {
   timestamp.setMilliseconds(0);
   console.log("timestamp: " + timestamp);
 
-  hmac.update(timestamp.toString());
-  console.log(hmac.digest('hex'));
+  //hmac.update(timestamp.toString());
+  //console.log(hmac.digest('hex'));
 
   hmac.update(timestamp.toString());
   let numberpattern = /\d+/g;
