@@ -102,11 +102,7 @@ app.post("/timey", function (request, response) {
   let numberpattern = /\d+/g;
   let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
   
-  console.log("Generated code: ", result);
-
-  //let timestamp = Math.round(Date.now() / (1000 * 60));
-  //let tobehashed = TOTP + timestamp;
-  //let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
+  //console.log("Generated code: ", result);
 
   console.log(result);
   if (parsedBody['totp'] === result) {
