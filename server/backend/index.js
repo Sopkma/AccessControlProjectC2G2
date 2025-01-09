@@ -114,7 +114,7 @@ app.post("/timey", function (request, response) {
     response.status(200).send("Code Verification Success");
     return;
   } else {
-    response.status(400).send("Code Comparison Failed");
+    response.status(401).send("Code Comparison Failed");
     return;
   }
 });
