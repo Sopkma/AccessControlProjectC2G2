@@ -94,21 +94,21 @@ app.post("/timey", function (request, response) {
 
   const hmac = createHmac('sha256', '2025');
 
-  var timestamp = new Date(Date.now());
-  timestamp.setSeconds(30);
-  timestamp.setMilliseconds(0);
+  let ms = 1000 * 30;
+  let timestamp = new Date(Math.round(new Date().getTime() / ms) * ms);
   console.log("timestamp: " + timestamp);
 
   hmac.update(timestamp.toString());
   let numberpattern = /\d+/g;
   let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
-  //console.log("this is the code:" + result);
+  
+  console.log("Generated code: ", result);
 
   //let timestamp = Math.round(Date.now() / (1000 * 60));
   //let tobehashed = TOTP + timestamp;
   //let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
 
-  console.log(hmac);
+  console.log(result);
   if (parsedBody['totp'] === result) {
     console.log("Valid Secret");
     response.status(200).send("Code Verification Success");
