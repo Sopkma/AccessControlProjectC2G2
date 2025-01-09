@@ -7,7 +7,7 @@ The web app has three main parts. The front-end, back-end/API, and the database.
 The front-end is what the user interacts with.
 Here we can see that the UI consist of a username and password field.
 
-![A picture of the app](./Newindex.png)
+![image](https://github.com/user-attachments/assets/fcef36e2-0c7f-4a87-a3ad-0d1c8f3a1d78)
 <br>
 
 If we inspect the page, we can see a source file named _common.js_.
