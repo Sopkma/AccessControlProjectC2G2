@@ -174,6 +174,71 @@ app.post("/login", function (request, response) {
 })
 ```
 
+### TOTP Implementation
+
+For added security to our app, a Time based One Time Password (TOTP) system was implemented. This requires logged in users to send a time based password that is generated from the totp command line app `cli.js`, before being able to reach the /query section of the server. The `/timey` route controls this function.
+
+`cli.js`:
+```Javascript
+const { createHmac } = require('crypto');
+
+const hmac = createHmac('sha256', '2025');
+
+let ms = 1000 * 30;
+let timestamp = new Date(Math.round(new Date().getTime() / ms) * ms).toISOString();
+console.log("timestamp: " + timestamp);
+
+hmac.update(timestamp.toString());
+let numberpattern = /\d+/g;
+let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
+console.log(result);
+```
+
+`/timey`:
+```Javascript
+app.post("/timey", function (request, response) {
+  let parsedBody = request.body;
+  console.log(parsedBody);
+  if (!parsedBody.hasOwnProperty('totp')) {
+    console.log("Error: No secret provided");
+    response.status(415).send("Incomplete Request");
+    return;
+  }
+
+  const hmac = createHmac('sha256', '2025');
+
+  let ms = 1000 * 30;
+  let timestamp = new Date(Math.round(new Date().getTime() / ms) * ms).toISOString();
+  console.log("timestamp: " + timestamp);
+
+  hmac.update(timestamp.toString());
+  let numberpattern = /\d+/g;
+  let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
+
+  console.log(result);
+  if (parsedBody['totp'] === result) {
+    console.log("Valid Secret");
+    response.status(200).send("Code Verification Success");
+    return;
+  } else {
+    response.status(401).send("Code Comparison Failed");
+    return;
+  }
+});
+```
+
+This security is done by requiring the user to have a matching totp code sent to the textbox in the route, if the code does not match, an error will be called and the user will not be able to proceed. 
+
+
+![image](https://github.com/user-attachments/assets/e525114a-cb44-4eb3-960d-ddea663b27b5)
+<br>
+
+This code alternates every 30 seconds. Once the user submits the correct totp code the server will then let the user through to the `/query` route.
+
+![image](https://github.com/user-attachments/assets/c0fee79f-e63b-48c3-a766-44fe0c37e0d7)
+<br>
+
+
 ## Database
 
 The database can be best described by looking at is code.
@@ -203,3 +268,4 @@ VALUES(
 
 The database, named `users` has one table called `users` which has exactly one row. This is the same row that is displayed on the front-end.
 We store the salt along with the password which is then used to check the appropriate associated hash with bcrypt.
+
