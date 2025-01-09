@@ -50,7 +50,7 @@ function login() {
 //PLACEHOLDER FOR TWOFACTOR LOGIC
 function twoFactor() {
   let stringifiedbody = JSON.stringify({
-    username: document.getElementById("username").value,
+    totp: document.getElementById("username").value,
   })
   console.log(stringifiedbody);
   fetch("http://" + parsedUrl.host + "/timey", {

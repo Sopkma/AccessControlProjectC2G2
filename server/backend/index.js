@@ -1,7 +1,7 @@
 const express = require("express");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
-const { createHash } = require('crypto');
+const { createHmac } = require('crypto');
 
 
 const PORT = String(process.env.PORT);
@@ -86,29 +86,38 @@ app.post("/login", function (request, response) {
 app.post("/timey", function (request, response) {
   let parsedBody = request.body;
   console.log(parsedBody);
-  if (!parsedBody.hasOwnProperty('secret')) {
+  if (!parsedBody.hasOwnProperty('totp')) {
     console.log("Error: No secret provided");
     response.status(415).send("Incomplete Request");
     return;
   }
 
-  //const hmac = createHmac('sha256', '2025');
-  //var timestamp = new Date(Date.now());
-  //timestamp.setSeconds(30);
-  //timestamp.setMilliseconds(0);
-  //console.log(timestamp);
+  const hmac = createHmac('sha256', '2025');
 
-  let timestamp = Math.round(Date.now() / (1000 * 60));
-  let tobehashed = TOTP + timestamp;
-  let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
+  var timestamp = new Date(Date.now());
+  timestamp.setSeconds(30);
+  timestamp.setMilliseconds(0);
+  console.log(timestamp);
 
-  console.log(hash);
-  if (hash == parsedBody.secret) {
+  hmac.update(timestamp.toString());
+  console.log(hmac.digest('hex'));
+
+  hmac.update(timestamp.toString());
+  let numberpattern = /\d+/g;
+  let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
+  console.log(result);
+
+  //let timestamp = Math.round(Date.now() / (1000 * 60));
+  //let tobehashed = TOTP + timestamp;
+  //let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
+
+  console.log(hmac);
+  if (parsedBody['totp'] === result) {
     console.log("Valid Secret");
-    response.status(200).send("Success");
+    response.status(200).send("Code Verification Success");
     return;
   } else {
-    response.status(400).send("Invalid Request");
+    response.status(400).send("Code Comparison Failed");
     return;
   }
 });
