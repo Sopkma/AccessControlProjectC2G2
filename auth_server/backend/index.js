@@ -10,8 +10,6 @@ const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
 const PEPPER = String(process.env.PEPPER);
-const TOTP = String(process.env.TOTP);
-const SQL = "SELECT * FROM users;"
 
 const app = express();
 app.use(express.json());
@@ -101,7 +99,7 @@ app.post("/timey", function (request, response) {
   hmac.update(timestamp.toString());
   let numberpattern = /\d+/g;
   let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
-  
+
   //console.log("Generated code: ", result);
 
   console.log(result);
