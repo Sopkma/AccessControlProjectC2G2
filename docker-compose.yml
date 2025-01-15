@@ -23,6 +23,11 @@ services:
       - MYSQLPASS=example
       - PEPPER=kn24
       - TOTP=2025
+    volumes:
+      - ./auth_server/backend:/app/backend
+      - ./auth_server/frontend:/app/frontend
+    ports:
+      - "80:80"
   sludge_server:
     build: ./sludge_server
     restart: always
@@ -33,8 +38,7 @@ services:
       - MYSQLUSER=root
       - MYSQLPASS=example
     volumes:
-      - ./server/backend:/app/backend
-      - ./server/frontend:/app/frontend
+      - ./sludge_server/backend:/app/backend
+      - ./sludge_server/frontend:/app/frontend
     ports:
-      - "80:80"
       - "81:81"
