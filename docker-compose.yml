@@ -1,11 +1,17 @@
 version: '3'
 services:
-  mysql:
+  datadb:
     image: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=example
     volumes:
-      - ./sql:/docker-entrypoint-initdb.d/
+      - ./sql/sludge.sql:/docker-entrypoint-initdb.d/
+  authdb:
+    image: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=example
+    volumes:
+      - ./sql/sludge.sql:/docker-entrypoint-initdb.d/
   server:
     build: ./server
     restart: always
