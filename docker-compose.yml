@@ -18,7 +18,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=80
-      - MYSQLHOST=mysql
+      - MYSQLHOST=authdb
       - MYSQLUSER=root
       - MYSQLPASS=example
       - PEPPER=kn24
@@ -34,7 +34,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=81
-      - MYSQLHOST=mysql
+      - MYSQLHOST=datadb
       - MYSQLUSER=root
       - MYSQLPASS=example
     volumes:
