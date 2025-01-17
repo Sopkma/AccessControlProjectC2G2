@@ -3,6 +3,8 @@ const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { createHmac } = require('crypto');
+const fetch = require('node-fetch');
+
 
 const PORT = String(process.env.PORT);
 const HOST = String(process.env.HOST);
@@ -10,25 +12,61 @@ const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
 const PEPPER = String(process.env.PEPPER);
-const TOTP = String(process.env.TOTP);
 const JWT_SECRET = String(process.env.JWTSECRET);
+
+const app = express();
+app.use(express.json());
+
 
 let connection = mysql.createConnection({
   host: MYSQLHOST,
   user: MYSQLUSER,
   password: MYSQLPASS,
-  database: "sludge",
-});
-const app = express();
-
-
-app.use(express.json());
-
-
-app.get("/", (request, response) => {
-  response.status(200).send("Working and healthy")
+  database: "users"
 });
 
+
+app.use("/", express.static("frontend"));
+
+
+app.get("/query", function (request, response) {
+  console.log('Request Headers:', request.headers);
+
+  // ==QUERY TOKEN VALIDATION==
+
+  const token = request.headers['authorization']?.split(' ')[1];
+  if(!token) {
+    return response.status(401).send("No token provided: /query");
+  }
+
+  try{
+    const validation = fetch("http://" + parsedUrl.host + "/validateToken", {
+      method: "POST",
+      headers: { 'Authorization': 'Bearer  ${token}' },
+    });
+
+    if(validation.status !== 200) {
+      return response.status(401).send("Token is invalid or expired");
+    }
+
+    const validationData = validation.json();
+    console.log('Token validated:', validationData);
+
+  let SQL = "SELECT * FROM users;"
+  connection.query(SQL, [true], (error, results, fields) => {
+    if (error) {
+      console.error(error.message);
+      response.status(500).send("database error");
+    } else {
+      console.log(results);
+      response.send(results);
+    }
+  });
+} catch(err){
+  console.error('Error validating token:', err.message);
+  response.status(401).send("Token is invalid or expired");
+}
+});
 
 app.post("/login", function (request, response) {
   let parsedBody = request.body;
@@ -69,6 +107,14 @@ app.post("/login", function (request, response) {
   });
 })
 
+
+//app.get("/timey", function (request, response) {
+//  let timestamp = Math.round(Date.now() / (1000 * 60));
+//  let tobehashed = TOTP + timestamp;
+//  let hash = createHash('sha256').update(tobehashed).digest('hex').replace(/\D/g, '').slice(null, 6);
+//  response.status(200).send(hash);
+// return
+//});
 
 app.post("/timey", function (request, response) {
   let parsedBody = request.body;
@@ -120,5 +166,6 @@ app.post("/validateToken", function (request, response) {
   });
 });
 
-app.listen(PORT, HOST)
-console.log(`Running on http://${HOST}:${PORT}`)
+app.listen(PORT, HOST);
+console.log(`Running on http://${HOST}:${PORT}`);
+

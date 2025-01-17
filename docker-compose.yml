@@ -1,35 +1,19 @@
 version: '3'
 services:
-  mysql-users:
+  datadb:
     image: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=example
     volumes:
-      - ./sql-users:/docker-entrypoint-initdb.d/
-  server-users:
-    build: ./server-users
-    restart: always
-    environment:
-      - HOST=0.0.0.0
-      - PORT=81
-      - MYSQLHOST=mysql-users
-      - MYSQLUSER=root
-      - MYSQLPASS=example
-      - PEPPER=kn24
-      - TOTP=2025
-      - JWTSECRET=jwtsupersecretcode
-    volumes:
-      - ./server-users/backend:/app/backend
-    ports:
-      - "8001:80"
-  mysql-website:
+      - ./sql/sludge:/docker-entrypoint-initdb.d/
+  authdb:
     image: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=example
     volumes:
-      - ./sql-website:/docker-entrypoint-initdb.d/
-  server-website:
-    build: ./server-website
+      - ./sql/auth:/docker-entrypoint-initdb.d/
+  auth_server:
+    build: ./auth_server
     restart: always
     environment:
       - HOST=0.0.0.0
@@ -37,8 +21,23 @@ services:
       - MYSQLHOST=authdb
       - MYSQLUSER=root
       - MYSQLPASS=example
+      - PEPPER=kn24
+      - TOTP=2025
     volumes:
-      - ./server-website/backend:/app/backend
-      - ./server-website/frontend:/app/frontend
+      - ./auth_server/backend:/app/backend
+      - ./auth_server/frontend:/app/frontend
     ports:
       - "80:80"
+  sludge_server:
+    build: ./sludge_server
+    restart: always
+    environment:
+      - HOST=0.0.0.0
+      - PORT=81
+      - MYSQLHOST=datadb
+      - MYSQLUSER=root
+      - MYSQLPASS=example
+    volumes:
+      - ./sludge_server/backend:/app/backend
+    ports:
+      - "81:81"
