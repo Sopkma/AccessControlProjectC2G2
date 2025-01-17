@@ -21,9 +21,6 @@ services:
       - MYSQLHOST=authdb
       - MYSQLUSER=root
       - MYSQLPASS=example
-      - PEPPER=kn24
-      - JWTSECRET= jwtsupersecretpassword
-      - TOTP=2025
     volumes:
       - ./auth_server/backend:/app/backend
       - ./auth_server/frontend:/app/frontend
@@ -38,6 +35,9 @@ services:
       - MYSQLHOST=datadb
       - MYSQLUSER=root
       - MYSQLPASS=example
+      - PEPPER=kn24
+      - JWTSECRET= jwtsupersecretpassword
+      - TOTP=2025
     volumes:
       - ./sludge_server/backend:/app/backend
     ports:
