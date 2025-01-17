@@ -39,6 +39,5 @@ services:
       - MYSQLPASS=example
     volumes:
       - ./sludge_server/backend:/app/backend
-      - ./sludge_server/frontend:/app/frontend
     ports:
       - "81:81"
