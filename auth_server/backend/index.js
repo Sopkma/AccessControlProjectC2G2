@@ -3,6 +3,7 @@ const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
 const jsonwebtoken = require("jsonwebtoken");
 const { createHmac } = require('crypto');
+const fetch = require('node-fetch');
 
 
 const PORT = String(process.env.PORT);
@@ -11,6 +12,7 @@ const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
 const PEPPER = String(process.env.PEPPER);
+const JWT_SECRET = String(process.env.JWTSECRET);
 
 const app = express();
 app.use(express.json());
@@ -28,6 +30,28 @@ app.use("/", express.static("frontend"));
 
 
 app.get("/query", function (request, response) {
+  console.log('Request Headers:', request.headers);
+
+  // ==QUERY TOKEN VALIDATION==
+
+  const token = request.headers['authorization']?.split(' ')[1];
+  if(!token) {
+    return response.status(401).send("No token provided: /query");
+  }
+
+  try{
+    const validation = fetch("http://" + parsedUrl.host + "/validateToken", {
+      method: "POST",
+      headers: { 'Authorization': 'Bearer  ${token}' },
+    });
+
+    if(validation.status !== 200) {
+      return response.status(401).send("Token is invalid or expired");
+    }
+
+    const validationData = validation.json();
+    console.log('Token validated:', validationData);
+
   let SQL = "SELECT * FROM users;"
   connection.query(SQL, [true], (error, results, fields) => {
     if (error) {
@@ -38,7 +62,11 @@ app.get("/query", function (request, response) {
       response.send(results);
     }
   });
-})
+} catch(err){
+  console.error('Error validating token:', err.message);
+  response.status(401).send("Token is invalid or expired");
+}
+});
 
 app.post("/login", function (request, response) {
   let parsedBody = request.body;
@@ -65,7 +93,13 @@ app.post("/login", function (request, response) {
             response.status(401).send("Unauthorized");
           } else {
             console.log(parsedBody["username"] + " logged in");
-            response.status(200).send("Success");
+            // ==Generate JWT==
+            const jwt = jsonwebtoken.sign({ username: parsedBody["username"] }, JWT_SECRET, { expiresIn: '1h' });
+            if (!JWT_SECRET) {
+              return response.status(500).send("JWT_SECRET is not defined");
+            }
+            response.status(200).json({JWTtoken: jwt});
+
           }
         });
       }
@@ -112,6 +146,24 @@ app.post("/timey", function (request, response) {
     response.status(401).send("Code Comparison Failed");
     return;
   }
+});
+
+// ==Validate JWT token==
+app.post("/validateToken", function (request, response) {
+  const token = request.headers['authorization']?.split(' ')[1];
+
+  if(!token) {
+    return response.status(401).send("No token provided: Validate JWT token");
+  }
+  
+  jsonwebtoken.verify(token, JWT_SECRET,(err, decoded) => {
+    if (err) {
+      return response.status(401).send("Token is invalid");
+    } else {
+      console.log("Token is valid", decoded);
+      response.status(200).send("Token is valid");
+    }
+  });
 });
 
 app.listen(PORT, HOST);

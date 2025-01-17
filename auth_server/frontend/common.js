@@ -1,6 +1,16 @@
 var parsedUrl = new URL(window.location.href);
 
 function query() {
+  const token = getCookie("token");
+
+  if(!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', 'Bearer ${token}');
+
   fetch("http://" + parsedUrl.host + "/query", {
     method: "GET",
     mode: "no-cors",
@@ -39,15 +49,23 @@ function login() {
         console.log("Incomplete Request");
         alert("Incomplete Request");
       } else {
-        location.href = "http://" + parsedUrl.host + "/2fac.html";
+        // ==Should add token to cookies==
+        resp.json().then((data) => {
+          if(data.token) {
+        document.cookie = `token=${data.token}`;
+        console.log('JWT token has been set in the cookies:', data.token);
+      } else {
+        console.error("No token received in the response.");
       }
-    })
-    .catch((err) => {
+    });
+    location.href = "http://" + parsedUrl.host + "/2fac.html";
+  }
+}).catch((err) => {
       console.log(err);
     })
 }
 
-//PLACEHOLDER FOR TWOFACTOR LOGIC
+//TWOFACTOR LOGIC
 function twoFactor() {
   let stringifiedbody = JSON.stringify({
     totp: document.getElementById("totp").value,
@@ -78,4 +96,16 @@ function twoFactor() {
     .catch((err) => {
       console.log(err);
     })
+}
+
+// ==GET COOKIE LOGIC==
+function getCookie(name) {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [key, value] = cookie.trim().split('=');
+    if (key === name) {
+      return value;
+    }
+  }
+  return null;
 }
