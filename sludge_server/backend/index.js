@@ -25,9 +25,9 @@ let connection = mysql.createConnection({
 });
 
 
-//app.get("/", (request, response) => {
-//  response.status(200).send("Working and healthy")
-//});
+app.get("/", (request, response) => {
+  response.status(200).send("Working and healthy")
+});
 
 app.post("/login", function (request, response) {
   let parsedBody = request.body;
