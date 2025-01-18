@@ -30,37 +30,37 @@ app.get("/query", function (request, response) {
   // ==QUERY TOKEN VALIDATION==
 
   const token = request.headers['authorization']?.split(' ')[1];
-  if(!token) {
+  if (!token) {
     return response.status(401).send("No token provided: /query");
   }
 
-  try{
+  try {
     const validation = fetch("http://" + parsedUrl.host + "/validateToken", {
       method: "POST",
-      headers: { 'Authorization': 'Bearer  ${token}' },
+      headers: { 'Authorization': `Bearer  ${token}` },
     });
 
-    if(validation.status !== 200) {
+    if (validation.status !== 200) {
       return response.status(401).send("Token is invalid or expired");
     }
 
     const validationData = validation.json();
     console.log('Token validated:', validationData);
 
-  let SQL = "SELECT * FROM users;"
-  connection.query(SQL, [true], (error, results, fields) => {
-    if (error) {
-      console.error(error.message);
-      response.status(500).send("database error");
-    } else {
-      console.log(results);
-      response.send(results);
-    }
-  });
-} catch(err){
-  console.error('Error validating token:', err.message);
-  response.status(401).send("Token is invalid or expired");
-}
+    let SQL = "SELECT * FROM users;"
+    connection.query(SQL, [true], (error, results, fields) => {
+      if (error) {
+        console.error(error.message);
+        response.status(500).send("database error");
+      } else {
+        console.log(results);
+        response.send(results);
+      }
+    });
+  } catch (err) {
+    console.error('Error validating token:', err.message);
+    response.status(401).send("Token is invalid or expired");
+  }
 });
 
 app.listen(PORT, HOST);
