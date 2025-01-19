@@ -21,6 +21,7 @@ services:
       - MYSQLHOST=authdb
       - MYSQLUSER=root
       - MYSQLPASS=example
+      - SLUDGE=sludge_server
     volumes:
       - ./auth_server/backend:/app/backend
       - ./auth_server/frontend:/app/frontend

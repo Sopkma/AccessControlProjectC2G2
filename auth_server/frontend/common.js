@@ -3,7 +3,7 @@ var parsedUrl = new URL(window.location.href);
 function query() {
   const token = getCookie("token");
 
-  if(!token) {
+  if (!token) {
     alert("No token provided: query()");
     return;
   }
@@ -51,16 +51,16 @@ function login() {
       } else {
         // ==Should add token to cookies==
         resp.json().then((data) => {
-          if(data.token) {
-        document.cookie = `token=${data.token}`;
-        console.log('JWT token has been set in the cookies:', data.token);
-      } else {
-        console.error("No token received in the response.");
+          if (data.token) {
+            document.cookie = `token=${data.token}`;
+            console.log('JWT token has been set in the cookies:', data.token);
+          } else {
+            console.error("No token received in the response.");
+          }
+        });
+        location.href = "http://" + parsedUrl.host + "/2fac.html";
       }
-    });
-    location.href = "http://" + parsedUrl.host + "/2fac.html";
-  }
-}).catch((err) => {
+    }).catch((err) => {
       console.log(err);
     })
 }
