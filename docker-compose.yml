@@ -5,15 +5,30 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=example
     volumes:
-      - ./sql/sludge:/docker-entrypoint-initdb.d/
+      - ./sql/sql-website:/docker-entrypoint-initdb.d/
   authdb:
     image: mysql
     environment:
       - MYSQL_ROOT_PASSWORD=example
     volumes:
-      - ./sql/auth:/docker-entrypoint-initdb.d/
-  auth_server:
-    build: ./auth_server
+      - ./sql/sql-users:/docker-entrypoint-initdb.d/
+  server-website:
+    build: ./server-website
+    restart: always
+    environment:
+      - HOST=0.0.0.0
+      - PORT=80
+      - MYSQLHOST=datadbapp.use(cors())
+
+      - MYSQLUSER=root
+      - MYSQLPASS=example
+    volumes:
+      - ./server-website/backend-website:/app/backend
+      - ./server-website/frontend:/app/frontend
+    ports:
+      - "80:80"
+  server-users:
+    build: ./server-users
     restart: always
     environment:
       - HOST=0.0.0.0
@@ -21,25 +36,10 @@ services:
       - MYSQLHOST=authdb
       - MYSQLUSER=root
       - MYSQLPASS=example
-      - SLUDGE=sludge_server
-    volumes:
-      - ./auth_server/backend:/app/backend
-      - ./auth_server/frontend:/app/frontend
-    ports:
-      - "80:80"
-  sludge_server:
-    build: ./sludge_server
-    restart: always
-    environment:
-      - HOST=0.0.0.0
-      - PORT=81
-      - MYSQLHOST=datadb
-      - MYSQLUSER=root
-      - MYSQLPASS=example
       - PEPPER=kn24
       - JWTSECRET= jwtsupersecretpassword
       - TOTP=2025
     volumes:
-      - ./sludge_server/backend:/app/backend
+      - ./server-users/backend:/app/backend
     ports:
-      - "81:81"
+      - "8001:80"

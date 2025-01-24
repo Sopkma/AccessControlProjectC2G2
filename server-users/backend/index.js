@@ -1,6 +1,7 @@
 const express = require("express");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
+const cors = require("cors");
 const jsonwebtoken = require("jsonwebtoken");
 const { createHmac } = require('crypto');
 const fetch = require('node-fetch');
@@ -16,12 +17,13 @@ const JWT_SECRET = String(process.env.JWTSECRET);
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 let connection = mysql.createConnection({
   host: MYSQLHOST,
   user: MYSQLUSER,
   password: MYSQLPASS,
-  database: "sludge",
+  database: "users",
 });
 
 
@@ -32,7 +34,7 @@ app.get("/", (request, response) => {
 app.post("/login", function (request, response) {
   let parsedBody = request.body;
   console.log(parsedBody);
-  if (!parsedBody.hasOwnProperty('username')) {
+  if (!parsedBody.hasOwnProperty("username")) {
     console.log("Incomplete request");
     response.status(415).send("Incomplete Request");
     return;
@@ -54,13 +56,6 @@ app.post("/login", function (request, response) {
             response.status(401).send("Unauthorized");
           } else {
             console.log(parsedBody["username"] + " logged in");
-            // ==Generate JWT==
-            const jwt = jsonwebtoken.sign({ username: parsedBody["username"] }, JWT_SECRET, { expiresIn: '1h' });
-            if (!JWT_SECRET) {
-              return response.status(500).send("JWT_SECRET is not defined");
-            }
-            response.status(200).json({JWTtoken: jwt});
-
           }
         });
       }
@@ -77,7 +72,7 @@ app.post("/timey", function (request, response) {
     return;
   }
 
-  const hmac = createHmac('sha256', '2025');
+  const hmac = createHmac('sha256', TOTP);
 
   let ms = 1000 * 30;
   let timestamp = new Date(Math.round(new Date().getTime() / ms) * ms).toISOString();
@@ -92,7 +87,13 @@ app.post("/timey", function (request, response) {
   console.log(result);
   if (parsedBody['totp'] === result) {
     console.log("Valid Secret");
-    response.status(200).send("Code Verification Success");
+    // ==Generate JWT==
+    let userData = "SELECT * FROM users WHERE username=" + parsedBody["username"] + ";";
+    let token = jwt.sign(userData, JWT_SECRET, { expiresIn: "1h" });
+    if (!JWT_SECRET) {
+        return response.status(500).send("JWT_SECRET is not defined");
+    }
+    response.status(200).json(token);
     return;
   } else {
     response.status(401).send("Code Comparison Failed");

@@ -1,6 +1,8 @@
 var parsedUrl = new URL(window.location.href);
+let usersUrl = "localhost:8001";
 
 function query() {
+  // get token from cookie
   const token = getCookie("token");
 
   if (!token) {
@@ -30,12 +32,10 @@ function login() {
     password: document.getElementById("password").value
   })
   console.log(stringifiedbody);
-  fetch("http://" + parsedUrl.host + "/login", {
+  fetch("http://" + usersUrl + "/login", {
     method: "POST",
     mode: "cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: {"Content-Type": "application/json",},
     body: stringifiedbody
   })
     .then((resp) => {
@@ -48,16 +48,7 @@ function login() {
       } else if (resp.status === 415) {
         console.log("Incomplete Request");
         alert("Incomplete Request");
-      } else {
-        // ==Should add token to cookies==
-        resp.json().then((data) => {
-          if (data.token) {
-            document.cookie = `token=${data.token}`;
-            console.log('JWT token has been set in the cookies:', data.token);
-          } else {
-            console.error("No token received in the response.");
-          }
-        });
+      } else if (resp.status === 200) {
         location.href = "http://" + parsedUrl.host + "/2fac.html";
       }
     }).catch((err) => {
@@ -69,9 +60,10 @@ function login() {
 function twoFactor() {
   let stringifiedbody = JSON.stringify({
     totp: document.getElementById("totp").value,
+    username: document.getElementById("username").value
   })
   console.log(stringifiedbody);
-  fetch("http://" + parsedUrl.host + "/timey", {
+  fetch("http://" + usersUrl + "/timey", {
     method: "POST",
     mode: "cors",
     headers: {
@@ -91,6 +83,15 @@ function twoFactor() {
         alert("Incomplete Request");
       } else {
         location.href = "http://" + parsedUrl.host + "/query.html";
+        // ==Should add token to cookies==
+        resp.json().then((data) => {
+          if (data.token) {
+            document.cookie = `token=${data.token}`;
+            console.log('JWT token has been set in the cookies:', data.token);
+          } else {
+            console.error("No token received in the response.");
+          }
+        })
       }
     })
     .catch((err) => {

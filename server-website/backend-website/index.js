@@ -4,7 +4,6 @@ const mysql = require("mysql2");
 
 const PORT = String(process.env.PORT);
 const HOST = String(process.env.HOST);
-const SLUDGE = String(process.env.SLUDGE) + ":81";
 const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
@@ -17,7 +16,7 @@ let connection = mysql.createConnection({
   host: MYSQLHOST,
   user: MYSQLUSER,
   password: MYSQLPASS,
-  database: "users"
+  database: "sludge"
 });
 
 
@@ -26,7 +25,10 @@ app.use("/", express.static("frontend"));
 
 app.get("/query", function (request, response) {
   console.log('Request Headers:', request.headers);
-
+  // get token from headers
+  //send token to user-server for verification
+  //if not successgul, send 401
+  // if successful
   // ==QUERY TOKEN VALIDATION==
 
   const token = request.headers['authorization']?.split(' ')[1];
@@ -35,7 +37,7 @@ app.get("/query", function (request, response) {
   }
 
   try {
-    fetch("http://" + SLUDGE + "/validateToken", {
+    fetch("http://" + "server-users:80" + "/validateToken", {
       method: "POST",
       headers: { 'Authorization': `Bearer  ${token}` },
     }).then(resp => {
@@ -64,37 +66,6 @@ app.get("/query", function (request, response) {
   };
 });
 
-app.post("/timey", function (request, response) {
-  let parsedBody = request.body;
-
-  try {
-    fetch("http://" + SLUDGE + "/timey", {
-      method: "POST",
-      headers: { 'Content-Type': `application/json` },
-      body: JSON.stringify(parsedBody)
-    }).then(resp => {
-
-      if (resp.status !== 200) {
-        return response.status(401).send("Invalid tfac");
-      }
-      console.log('Accepted 2fac attempt');
-
-      let SQL = "SELECT * FROM users;"
-      connection.query(SQL, [true], (error, results, fields) => {
-        if (error) {
-          console.error(error.message);
-          response.status(500).send("database error");
-        } else {
-          console.log(results);
-          response.send(results);
-        }
-      })
-    });
-  } catch (err) {
-    console.error('Error validating token:', err.message);
-    response.status(401).send("Token is invalid or expired");
-  }
-});
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
