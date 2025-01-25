@@ -18,8 +18,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=80
-      - MYSQLHOST=datadbapp.use(cors())
-
+      - MYSQLHOST=datadb
       - MYSQLUSER=root
       - MYSQLPASS=example
     volumes:

@@ -57,10 +57,9 @@ function login() {
 }
 
 //TWOFACTOR LOGIC
-function twoFactor() {
+function twoFactor(token) {
   let stringifiedbody = JSON.stringify({
-    totp: document.getElementById("totp").value,
-    username: document.getElementById("username").value
+    totp: document.getElementById("totp").value
   })
   console.log(stringifiedbody);
   fetch("http://" + usersUrl + "/timey", {
@@ -82,7 +81,7 @@ function twoFactor() {
         console.log("Incomplete Request");
         alert("Incomplete Request");
       } else {
-        location.href = "http://" + parsedUrl.host + "/query.html";
+        
         // ==Should add token to cookies==
         resp.json().then((data) => {
           if (data.token) {
@@ -92,6 +91,7 @@ function twoFactor() {
             console.error("No token received in the response.");
           }
         })
+        location.href = "http://" + parsedUrl.host + "/query.html";
       }
     })
     .catch((err) => {

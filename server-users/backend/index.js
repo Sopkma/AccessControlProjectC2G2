@@ -2,7 +2,7 @@ const express = require("express");
 const mysql = require("mysql2");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
-const jsonwebtoken = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const { createHmac } = require('crypto');
 const fetch = require('node-fetch');
 
@@ -56,6 +56,7 @@ app.post("/login", function (request, response) {
             response.status(401).send("Unauthorized");
           } else {
             console.log(parsedBody["username"] + " logged in");
+            response.status(200).send("Login Successful");
           }
         });
       }
@@ -93,7 +94,7 @@ app.post("/timey", function (request, response) {
     if (!JWT_SECRET) {
         return response.status(500).send("JWT_SECRET is not defined");
     }
-    response.status(200).json(token);
+    response.status(200).json({ token: token });
     return;
   } else {
     response.status(401).send("Code Comparison Failed");
@@ -109,7 +110,7 @@ app.post("/validateToken", function (request, response) {
     return response.status(401).send("No token provided: Validate JWT token");
   }
   
-  jsonwebtoken.verify(token, JWT_SECRET,(err, decoded) => {
+  jwt.verify(token, JWT_SECRET,(err, decoded) => {
     if (err) {
       return response.status(401).send("Token is invalid");
     } else {
