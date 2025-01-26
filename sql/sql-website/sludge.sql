@@ -31,16 +31,16 @@ INSERT INTO sludge (
   grossness
 ) VALUES (250,'red','very');
 
-INSERT INTO good (
+INSERT INTO goo (
   density,
   color,
   grossness,
   ooziness
-) VALUES (250,'red','very', 500000);
+) VALUES (250,'yellow','meh', 500000);
 
-INSERT INTO sludge (
+INSERT INTO shlop (
   density,
   color,
   grossness,
   trashiness
-) VALUES (250,'red','very',4567);
+) VALUES (250,'cyan','cute',4567);

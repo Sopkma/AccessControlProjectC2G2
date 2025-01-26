@@ -13,7 +13,7 @@ function query() {
   const headers = new Headers();
   headers.append('Authorization', `Bearer ${token}`);
 
-  fetch("http://" + parsedUrl.host + "/query", {
+  fetch("http://" + parsedUrl.host + "/query/sludge", {
     method: "GET",
     mode: "cors",
     headers: headers
@@ -28,10 +28,12 @@ function query() {
 }
 
 function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
   let stringifiedbody = JSON.stringify({
-    username: document.getElementById("username").value,
-    password: document.getElementById("password").value
-  })
+    username: username,
+    password: password
+  });
   console.log(stringifiedbody);
   fetch("http://" + usersUrl + "/login", {
     method: "POST",
@@ -50,6 +52,10 @@ function login() {
         console.log("Incomplete Request");
         alert("Incomplete Request");
       } else if (resp.status === 200) {
+
+        //Uses session storahe to temporarly store username and password
+        localStorage.setItem("username", username);
+        localStorage.setItem("password", password);
         location.href = "http://" + parsedUrl.host + "/2fac.html";
       }
     }).catch((err) => {
@@ -59,8 +65,19 @@ function login() {
 
 //TWOFACTOR LOGIC
 function twoFactor(token) {
+  //fetches temporary username and storage location
+  const username = localStorage.getItem("username");
+  const password = localStorage.getItem("password");
+  sessionStorage.clear();
+  if (!username || !password) {
+    alert("No cached username or password")
+    return
+  }
+
   let stringifiedbody = JSON.stringify({
-    totp: document.getElementById("totp").value
+    totp: document.getElementById("totp").value,
+    username: username,
+    password: password
   })
   console.log(stringifiedbody);
   fetch("http://" + usersUrl + "/timey", {

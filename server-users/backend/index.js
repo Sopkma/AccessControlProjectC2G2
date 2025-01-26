@@ -64,7 +64,7 @@ app.post("/login", function (request, response) {
   });
 })
 
-app.post("/timey", function (request, response) {
+app.post("/timey", async function (request, response) {
   let parsedBody = request.body;
   console.log(parsedBody);
   if (!parsedBody.hasOwnProperty('totp')) {
@@ -84,13 +84,14 @@ app.post("/timey", function (request, response) {
   let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
 
   //console.log("Generated code: ", result);
-
   console.log(result);
   if (parsedBody['totp'] == result) {
     console.log("Valid Secret");
+    if (!parsedBody["username"] || !parsedBody["password"]) {
+      return response.status(401).send("No username or password");
+    }
     // ==Generate JWT==
-    let userData = "SELECT * FROM users WHERE username=" + parsedBody["username"] + ";";
-    let token = jwt.sign({ data: userData }, JWT_SECRET, { expiresIn: '1 h' });
+    let token = jwt.sign({ username: parsedBody["username"], password: parsedBody["password"] }, JWT_SECRET, { expiresIn: '1 h' });
     if (!token) {
       return response.status(500).send("JWT_SECRET is not defined");
     }
@@ -104,7 +105,7 @@ app.post("/timey", function (request, response) {
 
 // ==Validate JWT token==
 app.post("/validateToken", function (request, response) {
-  const token = request.headers['authorization']?.split(' ')[2];
+  const token = request.headers['authorization']?.split(' ')[1];
   console.log(token)
 
   if (!token) {
@@ -115,8 +116,32 @@ app.post("/validateToken", function (request, response) {
     if (err) {
       return response.status(401).send("Token is invalid");
     } else {
-      console.log("Token is valid", decoded);
-      response.status(200).json(decoded);
+      //verify user, then append role to token output
+      let SQL = "SELECT * FROM users WHERE username=?;";
+      connection.query(SQL, decoded["username"], (error, results, fields) => {
+        if (error) {
+          console.error("Databasae Error:\n", error.message);
+          response.status(500).send("Server Error");
+        } else {
+          if (results.length === 0) {
+            console.log("User not found");
+            response.status(401).send("Unauthorized");
+          } else {
+            let combinedPass = results[0]["salt"] + decoded["password"] + PEPPER;
+            bcrypt.compare(combinedPass, results[0]["password"], function (err, _) {
+              if (err) {
+                console.log("Password mismatch");
+                response.status(401).send("Unauthorized");
+              } else {
+                console.log(results)
+                decoded.role = results[0].role
+                console.log("Token is valid", decoded);
+                response.status(200).json(decoded);
+              }
+            });
+          }
+        }
+      });
     }
   });
 });

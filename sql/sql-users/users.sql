@@ -7,7 +7,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     salt     VARCHAR(4)   NOT NULL,
     email    VARCHAR(255) NOT NULL,
-    role     ENUM('admin','editor','subscriber')  NOT NULL,
+    role     ENUM("admin","editor","subscriber")  NOT NULL,
     PRIMARY KEY (username)
 );
 
@@ -16,6 +16,6 @@ VALUES(
     "user",
     "pass", -- make bcrypt password with the salt and pepper
     "hm84",
-    "user@example.com"
-    "admin" --role
+    "user@example.com",
+     0--role
 );
