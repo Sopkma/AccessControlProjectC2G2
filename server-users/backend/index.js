@@ -116,7 +116,7 @@ app.post("/validateToken", function (request, response) {
       return response.status(401).send("Token is invalid");
     } else {
       console.log("Token is valid", decoded);
-      response.status(200).send("Token is valid");
+      response.status(200).json(decoded);
     }
   });
 });
