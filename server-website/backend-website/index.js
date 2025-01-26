@@ -1,5 +1,6 @@
 const express = require("express");
 const mysql = require("mysql2");
+const cors = require("cors");
 
 
 const PORT = String(process.env.PORT);
@@ -9,6 +10,7 @@ const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 
@@ -24,7 +26,6 @@ app.use("/", express.static("frontend"));
 
 
 app.get("/query", function (request, response) {
-  console.log('Request Headers:', request.headers);
   // get token from headers
   //send token to user-server for verification
   //if not successgul, send 401
@@ -43,13 +44,13 @@ app.get("/query", function (request, response) {
     }).then(resp => {
 
       if (resp.status !== 200) {
+        console.log("Invalid token")
         return response.status(401).send("Token is invalid or expired");
       }
 
-      const validationData = resp.json();
-      console.log('Token validated:', validationData);
+      console.log('Token validated:', resp.body);
 
-      let SQL = "SELECT * FROM users;"
+      let SQL = "SELECT * FROM sludge;"
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);

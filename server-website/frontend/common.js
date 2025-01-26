@@ -11,11 +11,12 @@ function query() {
   }
 
   const headers = new Headers();
-  headers.append('Authorization', 'Bearer ${token}');
+  headers.append('Authorization', `Bearer ${token}`);
 
   fetch("http://" + parsedUrl.host + "/query", {
     method: "GET",
-    mode: "no-cors",
+    mode: "cors",
+    headers: headers
   })
     .then((resp) => resp.text())
     .then((data) => {
@@ -35,7 +36,7 @@ function login() {
   fetch("http://" + usersUrl + "/login", {
     method: "POST",
     mode: "cors",
-    headers: {"Content-Type": "application/json",},
+    headers: { "Content-Type": "application/json", },
     body: stringifiedbody
   })
     .then((resp) => {
@@ -81,7 +82,7 @@ function twoFactor(token) {
         console.log("Incomplete Request");
         alert("Incomplete Request");
       } else {
-        
+
         // ==Should add token to cookies==
         resp.json().then((data) => {
           if (data.token) {

@@ -86,13 +86,13 @@ app.post("/timey", function (request, response) {
   //console.log("Generated code: ", result);
 
   console.log(result);
-  if (parsedBody['totp'] === result) {
+  if (parsedBody['totp'] == result) {
     console.log("Valid Secret");
     // ==Generate JWT==
     let userData = "SELECT * FROM users WHERE username=" + parsedBody["username"] + ";";
-    let token = jwt.sign(userData, JWT_SECRET, { expiresIn: "1h" });
-    if (!JWT_SECRET) {
-        return response.status(500).send("JWT_SECRET is not defined");
+    let token = jwt.sign({ data: userData }, JWT_SECRET, { expiresIn: '1 h' });
+    if (!token) {
+      return response.status(500).send("JWT_SECRET is not defined");
     }
     response.status(200).json({ token: token });
     return;
@@ -104,13 +104,14 @@ app.post("/timey", function (request, response) {
 
 // ==Validate JWT token==
 app.post("/validateToken", function (request, response) {
-  const token = request.headers['authorization']?.split(' ')[1];
+  const token = request.headers['authorization']?.split(' ')[2];
+  console.log(token)
 
-  if(!token) {
+  if (!token) {
     return response.status(401).send("No token provided: Validate JWT token");
   }
-  
-  jwt.verify(token, JWT_SECRET,(err, decoded) => {
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
       return response.status(401).send("Token is invalid");
     } else {
