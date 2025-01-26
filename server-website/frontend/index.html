@@ -2,8 +2,8 @@
 
 <html>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.png">
-	<link type="text/css" rel="stylesheet" href="common.css">
-	<script type="text/javascript" src="common.js"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+	  <script type="text/javascript" src="common.js"></script>
     <head>
         <title>
             Access Control Project
@@ -11,13 +11,18 @@
     </head>
 
     <body>
-        <div class="content">
-            <label for="username">Username:</label>
-            <input id="username" placeholder="username"></input>
-            <label for="password">Password:</label>
-            <input id="password" placeholder="password"></input>
-            <p></p>
-            <button class="button" onclick="login()">login</button>
+        <div class="flex flex-col h-screen justify-center gap-4 content-center items-center bg-[url(https://imgs.search.brave.com/4ZAcmHiAHfIP0ymfoBY-OyCV3mmtqfhxyuLu5GR-5Kc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA2LzgwLzAzLzQ3/LzM2MF9GXzY4MDAz/NDcxOF8zSmo4M05X/ZU9pbmJYU3dKQUYw/enVMcEhQY1FDYUVI/Wi5qcGc)] bg-cover bg-center">
+          <div>
+            <label class="text-teal-200" for="username">Username:</label>
+            <input class="bg-blue-500" id="username" placeholder="username"></input>
+          </div>
+          <div>
+            <label class= "text-teal-200" for="password">Password:</label>
+            <input class= "bg-blue-500" id="password" placeholder="password"></input>
+          </div>
+          <div>
+            <button class="bg-black text-white" onclick="login()">login</button>
+          </div>
 		</div>
     </body>
 </html>

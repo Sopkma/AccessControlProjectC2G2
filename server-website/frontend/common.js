@@ -1,7 +1,7 @@
 var parsedUrl = new URL(window.location.href);
 let usersUrl = "localhost:8001";
 
-function query() {
+function query_sludge() {
   // get token from cookie
   const token = getCookie("token");
 
@@ -20,7 +20,59 @@ function query() {
   })
     .then((resp) => resp.text())
     .then((data) => {
-      document.getElementById("response").innerHTML = data;
+      document.getElementById("sludge").innerHTML = data;
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+
+function query_shlop() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/shlop", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
+    .then((resp) => resp.text())
+    .then((data) => {
+      document.getElementById("shlop").innerHTML = data;
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+
+function query_goo() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/goo", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
+    .then((resp) => resp.text())
+    .then((data) => {
+      document.getElementById("goo").innerHTML = data;
     })
     .catch((err) => {
       console.log(err);
