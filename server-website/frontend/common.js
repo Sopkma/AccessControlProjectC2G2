@@ -157,11 +157,11 @@ function twoFactor(token) {
           if (data.token) {
             document.cookie = `token=${data.token}`;
             console.log('JWT token has been set in the cookies:', data.token);
+            location.href = "http://" + parsedUrl.host + "/query.html";
           } else {
             console.error("No token received in the response.");
           }
         })
-        location.href = "http://" + parsedUrl.host + "/query.html";
       }
     })
     .catch((err) => {
