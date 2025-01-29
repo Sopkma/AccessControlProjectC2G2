@@ -15,59 +15,75 @@ This is a JavaScript file that includes this line of code.
 
 ```Javascript
 var parsedUrl = new URL(window.location.href);
+let usersUrl = "localhost:8001";
 
-function query() {
-    fetch("http://" + parsedUrl.host + "/query", {
-        method: "GET",
-        mode: "no-cors",
-    })
+function query_sludge() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/sludge", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
     .then((resp) => resp.text())
     .then((data) => {
-        document.getElementById("response").innerHTML = data;
+      document.getElementById("sludge").innerHTML = data;
     })
     .catch((err) => {
-        console.log(err);
+      console.log(err);
     })
 }
 ```
 
 `window.location.href` gets the current URL of the page which is `localhost:80` in this case.
-The query function sends a request to our server using the `/query` route and displays the data in the HTML element with the "response" id. The full URL in this case would be `localhost:80/query`.
+The query function sends a request to our server using the `/query` route and displays the data in the HTML element with the "response" id. The full URL in this case would be `localhost:80/query`. The query function also takes in a cookie from the browser as a token (through the use of a helper function `getCookie(name)`) that is generated upon completing a TOTP request which is shown later. This token is then used to authorize the user using a later function validateToken, this is for added security of the website.
 
 Similar to the `query` function, the `login` function makes http request as well, but the
 difference is the login makes a `POST` request instead of a `GET` request.
-This fills the http body of our request with the login data, which is a `JSON` object with the field username and password.
+This fills the http body of our request with the login data, which is a `JSON` object with the field username and password. Upon a correct login, the users username and password are stored temporarily when transferring to the `2fac.html` page for two factor authorization.
 
 ```Javascript
 function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
   let stringifiedbody = JSON.stringify({
-    username: document.getElementById("username").value,
-    password: document.getElementById("password").value
-  })
+    username: username,
+    password: password
+  });
   console.log(stringifiedbody);
-  fetch("http://" + parsedUrl.host + "/login", {
+  fetch("http://" + usersUrl + "/login", {
     method: "POST",
     mode: "cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json", },
     body: stringifiedbody
   })
     .then((resp) => {
-      if (resp.status = 500) {
+      if (resp.status === 500) {
         alert("Server Error");
-      } else if (resp.status = 401) {
+      } else if (resp.status === 401) {
         console.log("Username or password incorrect");
         alert("Username or password incorrect");
 
-      } else if (resp.status = 415) {
+      } else if (resp.status === 415) {
         console.log("Incomplete Request");
         alert("Incomplete Request");
-      } else {
-        location.href = "http://" + parsedUrl.host + "/query.html";
+      } else if (resp.status === 200) {
+
+        //Uses session storahe to temporarly store username and password
+        localStorage.setItem("username", username);
+        localStorage.setItem("password", password);
+        location.href = "http://" + parsedUrl.host + "/2fac.html";
       }
-    })
-    .catch((err) => {
+    }).catch((err) => {
       console.log(err);
     })
 }
@@ -104,46 +120,147 @@ The HTML of the webpage looks like this
 
 The HTML that is rendered in the webpage is the login screen which a request to login can be made.
 
+Moving to the function `twoFactor`, it takes in the previously stored username and password and checks to make sure they were stored as they are required for the generation of a TOTP code. It then clears the storage shortly after taking in the username and password as variables. Similar to the `login` function the `twoFactor` also makes a `POST` request. During the request to `/timey` a JWT token is generated upon two factor login and sent to this function, where it is then set into the cookies and the user is moved to the `/query.html` side of the website.
+
+````JavaScript
+function twoFactor(token) {
+  //fetches temporary username and storage location
+  const username = localStorage.getItem("username");
+  const password = localStorage.getItem("password");
+  sessionStorage.clear();
+  if (!username || !password) {
+    alert("No cached username or password")
+    return
+  }
+
+  let stringifiedbody = JSON.stringify({
+    totp: document.getElementById("totp").value,
+    username: username,
+    password: password
+  })
+  console.log(stringifiedbody);
+  fetch("http://" + usersUrl + "/timey", {
+    method: "POST",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: stringifiedbody
+  })
+    .then((resp) => {
+      if (resp.status === 500) {
+        alert("Server Error");
+      } else if (resp.status === 401) {
+        console.log("TOTP code incorrect");
+        alert("TOTP code incorrect");
+
+      } else if (resp.status === 415) {
+        console.log("Incomplete Request");
+        alert("Incomplete Request");
+      } else {
+
+        // ==Should add token to cookies==
+        resp.json().then((data) => {
+          if (data.token) {
+            document.cookie = `token=${data.token}`;
+            console.log('JWT token has been set in the cookies:', data.token);
+            location.href = "http://" + parsedUrl.host + "/query.html";
+          } else {
+            console.error("No token received in the response.");
+          }
+        })
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+````
+
+A helper function has been created to help with the collecting of the cookie from the headers called `function getCookie(name)`. The function is shown below:
+
+````JavaScript
+function getCookie(name) {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [key, value] = cookie.trim().split('=');
+    if (key === name) {
+      return value;
+    }
+  }
+  return null;
+}
+````
+Where it'll take in a name, compare that to a key, and then return the associated value of the key, value pair.
+
 ## Backend/API
 
-On the back-end, we can see the response in the terminal.
+There are two backend servers that are run together to form our website, the `server-website` backend and the `server-users` backend as can be seen in the terminal.
 
-![The picture of the terminal's response](./term.png)
+![image](https://github.com/user-attachments/assets/82097be0-7e85-4962-9678-23cc9b498168)
 <br>
 
 ### Query route
 
-The server's `/query` route is described in the file `server/backend/index.js`.
+The server's `/query` route is described in the file `server-website/backend/index.js`.
 
 ```Javascript
-app.get("/query", function (request, response) {
-  connection.query(SQL, [true], (error, results, fields) => {
-    if (error) {
-      console.error(error.message);
-      response.status(500).send("database error");
-    } else {
-      console.log(results);
-      response.send(results);
-    }
-  });
-})
+app.get("/query/sludge", function (request, response) {
+  // get token from headers
+  // send token to user-server for verification
+  //if not successgul, send 401
+  // if successful
+  // ==QUERY TOKEN VALIDATION==
+
+  const token = request.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return response.status(401).send("No token provided: /query/sludge");
+  }
+
+  try {
+    fetch("http://" + "server-users:80" + "/validateToken", {
+      method: "POST",
+      headers: { 'Authorization': `Bearer ${token}` },
+    }).then(resp => {
+
+      if (resp.status !== 200) {
+        console.log("Invalid token")
+        return response.status(401).send("Token is invalid or expired");
+      }
+
+      console.log('Token validated:', resp.body);
+
+      let SQL = "SELECT * FROM sludge;"
+      connection.query(SQL, [true], (error, results, fields) => {
+        if (error) {
+          console.error(error.message);
+          response.status(500).send("database error");
+        } else {
+          console.log(results);
+          response.send(results);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Error validating token:', err.message);
+    response.status(401).send("Token is invalid or expired");
+  };
+});
 ```
+There is a lot going on that is above the scope of this document. In simple terms, the token generated during TOTP is collected from the authorization headers, where it is then sent to be validated in the `/validateToken` route on the `server-users:80` route. If the token is not validated an error will throw, otherwise once the token is validated it'll send the response in the console of the token. This then allows the user in and makes a request to the MySQL server and prints the response which is then sent to the web browser.
 
-There is a lot going on that is above the scope of this document. In simple terms, this makes a request to the MySQL server and prints the response which is then sent to the web browser.
-
-The query this runs is `const SQL = "SELECT * FROM users;"`
-this selects all users from the database.
+The query this runs is `const SQL = "SELECT * FROM sludge;"`
+this selects all data about sludge from the database.
 
 ### Login Route
 
-The `/login` route attempts to login in a user by parsing the given http request body and comparing the user's credentials to the one logged in the database.
-A lot of possible errors are assigned appropriate error codes.
+The `/login` route, which resides on the `server-users/backend/index.js` section of the website, attempts to login in a user by parsing the given http request body and comparing the user's credentials to the one logged in the database. A lot of possible errors are assigned appropriate error codes.
 
 ```Javascript
 app.post("/login", function (request, response) {
   let parsedBody = request.body;
   console.log(parsedBody);
-  if (!parsedBody.hasOwnProperty('username')) {
+  if (!parsedBody.hasOwnProperty("username")) {
     console.log("Incomplete request");
     response.status(415).send("Incomplete Request");
     return;
@@ -165,7 +282,7 @@ app.post("/login", function (request, response) {
             response.status(401).send("Unauthorized");
           } else {
             console.log(parsedBody["username"] + " logged in");
-            response.status(200).send("Success");
+            response.status(200).send("Login Successful");
           }
         });
       }
@@ -176,7 +293,8 @@ app.post("/login", function (request, response) {
 
 ### TOTP Implementation
 
-For added security to our app, a Time based One Time Password (TOTP) system was implemented. This requires logged in users to send a time based password that is generated from the totp command line app `cli.js`, before being able to reach the /query section of the server. The `/timey` route controls this function.
+For added security to our app, a Time based One Time Password (TOTP) system was implemented. This requires logged in users to send a time based password that is generated from the totp command line app `cli.js`, before being able to reach the /query section of the server.
+The `/timey` route controls this function which resides on the `server-users/backend/index.js`.
 
 `cli.js`:
 ```Javascript
@@ -196,7 +314,7 @@ console.log(result);
 
 `/timey`:
 ```Javascript
-app.post("/timey", function (request, response) {
+app.post("/timey", async function (request, response) {
   let parsedBody = request.body;
   console.log(parsedBody);
   if (!parsedBody.hasOwnProperty('totp')) {
@@ -205,7 +323,7 @@ app.post("/timey", function (request, response) {
     return;
   }
 
-  const hmac = createHmac('sha256', '2025');
+  const hmac = createHmac('sha256', TOTP);
 
   let ms = 1000 * 30;
   let timestamp = new Date(Math.round(new Date().getTime() / ms) * ms).toISOString();
@@ -215,10 +333,19 @@ app.post("/timey", function (request, response) {
   let numberpattern = /\d+/g;
   let result = hmac.digest('hex').match(numberpattern).join('').slice(-6);
 
+  //console.log("Generated code: ", result);
   console.log(result);
-  if (parsedBody['totp'] === result) {
+  if (parsedBody['totp'] == result) {
     console.log("Valid Secret");
-    response.status(200).send("Code Verification Success");
+    if (!parsedBody["username"] || !parsedBody["password"]) {
+      return response.status(401).send("No username or password");
+    }
+    // ==Generate JWT==
+    let token = jwt.sign({ username: parsedBody["username"], password: parsedBody["password"] }, JWT_SECRET, { expiresIn: '1 h' });
+    if (!token) {
+      return response.status(500).send("JWT_SECRET is not defined");
+    }
+    response.status(200).json({ token: token });
     return;
   } else {
     response.status(401).send("Code Comparison Failed");
@@ -227,7 +354,7 @@ app.post("/timey", function (request, response) {
 });
 ```
 
-This security is done by requiring the user to have a matching totp code sent to the textbox in the route, if the code does not match, an error will be called and the user will not be able to proceed. 
+This security is done by requiring the user to have a matching totp code sent to the textbox in the route, if the code does not match, an error will be called and the user will not be able to proceed. If the code matches, the user will be able to proceed while also generating a JWT token that, spoken of before, is sent to the `twoFactor` function where it is then sent into the cookies, where the query route then sends it to the validate token function to be validated.
 
 
 ![image](https://github.com/user-attachments/assets/e525114a-cb44-4eb3-960d-ddea663b27b5)
@@ -238,11 +365,63 @@ This code alternates every 30 seconds. Once the user submits the correct totp co
 ![image](https://github.com/user-attachments/assets/c0fee79f-e63b-48c3-a766-44fe0c37e0d7)
 <br>
 
+### Token Validation
+
+The token validation route is used in the query route to validate the logged in users JWT token when they successfully pass in a valid two factor code. This takes in the JWT token from the headers and checks if the token exists, if not it will throw a not provided error. If the token is taken in, it will be verified using the jsonwebtoken function verify() to verify the users token. It will then append the users role to the token output before sending the decoded token back to the query route on a successful 200 status. There are many ways implemented to catch errors as well as checks to ensure the token is validated correctly.
+
+```JavaScript
+app.post("/validateToken", function (request, response) {
+  const token = request.headers['authorization']?.split(' ')[1];
+  console.log(token)
+
+  if (!token) {
+    return response.status(401).send("No token provided: Validate JWT token");
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return response.status(401).send("Token is invalid");
+    } else {
+      //verify user, then append role to token output
+      let SQL = "SELECT * FROM users WHERE username=?;";
+      connection.query(SQL, decoded["username"], (error, results, fields) => {
+        if (error) {
+          console.error("Databasae Error:\n", error.message);
+          response.status(500).send("Server Error");
+        } else {
+          if (results.length === 0) {
+            console.log("User not found");
+            response.status(401).send("Unauthorized");
+          } else {
+            let combinedPass = results[0]["salt"] + decoded["password"] + PEPPER;
+            bcrypt.compare(combinedPass, results[0]["password"], function (err, _) {
+              if (err) {
+                console.log("Password mismatch");
+                response.status(401).send("Unauthorized");
+              } else {
+                console.log(results)
+                decoded.role = results[0].role
+                console.log("Token is valid", decoded);
+                response.status(200).json(decoded);
+              }
+            });
+          }
+        }
+      });
+    }
+  });
+});
+```
+Below is a sample picture of the token being validated:
+![image](https://github.com/user-attachments/assets/f92d1b8c-32f3-4c8c-94ea-d45f251cd2fd)
+<br>
+
+
 
 ## Database
 
-The database can be best described by looking at is code.
-The SQL database schema is described in `sql/users.sql`.
+The databases can be best described by looking their code.
+The SQL user database schema is described in `sql-users/users.sql`.
 
 ```SQL
 CREATE DATABASE users;
@@ -266,6 +445,28 @@ VALUES(
 );
 ```
 
-The database, named `users` has one table called `users` which has exactly one row. This is the same row that is displayed on the front-end.
+The database, named `users` has one table called `users` which has exactly one row.
 We store the salt along with the password which is then used to check the appropriate associated hash with bcrypt.
+
+The other database `sql-website/sludge.sql` holds information on our sludge values
+
+```SQL
+CREATE DATABASE sludge;
+
+use sludge;
+
+CREATE TABLE sludge (
+  id  INT PRIMARY KEY AUTO_INCREMENT,
+  density INT,
+  color VARCHAR(250),
+  grossness VARCHAR(250)
+);
+
+INSERT INTO sludge (
+  density,
+  color,
+  grossness
+) VALUES (250,'red','very');
+```
+This is the data that is seen when performing a query on the query route.
 
