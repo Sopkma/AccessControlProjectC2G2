@@ -19,3 +19,12 @@ VALUES(
     "user@example.com",
      0--role
 );
+
+INSERT INTO users
+VALUES(
+    "user2",
+    "pass2", -- make bcrypt password with the salt and pepper
+    "hm84",
+    "user2@example.com",
+     1--role
+);
