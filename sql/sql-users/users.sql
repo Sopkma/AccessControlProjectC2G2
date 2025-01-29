@@ -11,6 +11,15 @@ CREATE TABLE users (
     PRIMARY KEY (username)
 );
 
+CREATE TABLE logs (
+    id INT,
+    ts TIMESTAMP NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    datatype VARCHAR(255) NOT NULL,
+    status     ENUM("success","failure")  NOT NULL,
+    PRIMARY KEY (id)
+);
+ 
 INSERT INTO users
 VALUES(
     "user",
