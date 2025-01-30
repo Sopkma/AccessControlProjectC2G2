@@ -7,16 +7,18 @@ The web app has three main parts. The front-end, back-end/API, and the database.
 The front-end is what the user interacts with.
 Here we can see that the UI consist of a username and password field.
 
-![image](https://github.com/user-attachments/assets/fcef36e2-0c7f-4a87-a3ad-0d1c8f3a1d78)
+![image](https://github.com/user-attachments/assets/7239b0f9-f840-4e8b-8baa-8c58d6a6daae)
 <br>
 
 If we inspect the page, we can see a source file named _common.js_.
-This is a JavaScript file that includes this line of code.
+This is a JavaScript file which includes the functions that control each aspect of the frontend.
+
+The first of those functions is the `query` function for each of the gunk databases held on the website.
 
 ```Javascript
 var parsedUrl = new URL(window.location.href);
 let usersUrl = "localhost:8001";
-
+ 
 function query_sludge() {
   // get token from cookie
   const token = getCookie("token");
@@ -42,10 +44,93 @@ function query_sludge() {
       console.log(err);
     })
 }
+
+function query_shlop() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/shlop", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
+    .then((resp) => resp.text())
+    .then((data) => {
+      document.getElementById("shlop").innerHTML = data;
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+
+function query_goo() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/goo", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
+    .then((resp) => resp.text())
+    .then((data) => {
+      document.getElementById("goo").innerHTML = data;
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
 ```
 
 `window.location.href` gets the current URL of the page which is `localhost:80` in this case.
-The query function sends a request to our server using the `/query` route and displays the data in the HTML element with the "response" id. The full URL in this case would be `localhost:80/query`. The query function also takes in a cookie from the browser as a token (through the use of a helper function `getCookie(name)`) that is generated upon completing a TOTP request which is shown later. This token is then used to authorize the user using a later function validateToken, this is for added security of the website.
+The query function sends a request to our server using the `/query/_____` route and displays the data in the HTML element with the "response" id. The full URL in these cases would be `localhost:80/query/____` where ____ is one of the databases. Each query function takes in a cookie from the browser as a token (through the use of a helper function `getCookie(name)`) that is generated upon completing a TOTP request which is shown later. This token is then used to authorize the user using a later function validateToken, this is for added security of the website.
+
+The HTML for this section of the website is shown below:
+```HTML
+<!DOCTYPE html>
+
+<html>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.png">
+	<script type="text/javascript" src="common.js"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <head>
+        <title>
+            Access Control Project
+        </title>
+    </head>
+
+    <body class="flex flex-row h-screen justify-center gap-4 content-center items-center bg-[url(https://imgs.search.brave.com/_LDzlTA3Oc-RJzIoJM49sfy-c1jbYHTiTZLSBPlsw0Q/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAzLzc1LzMwLzI1/LzI0MF9GXzM3NTMw/MjUyNl9GTUNDcXpY/UmE0bGcyZHNPV28w/RVBRZTI0am9WOTFz/RS5qcGc)] bg-cover bg-center">
+        <div class="flex flex-col">
+            <textarea class="bg-linear-to-t to-lime-500 from-purple-500" id="sludge" rows="20" cols="45" placeholder="Database Results"></textarea>
+            <button class="bg-black text-white" onclick="query_sludge()">Query</button>
+		    </div>
+        <div class="flex flex-col">
+            <textarea class="bg-linear-to-t to-cyan-500 from-orange-500" id="goo" rows="20" cols="45" placeholder="Database Results"></textarea>
+            <button class="bg-black text-white" onclick="query_goo()">Query</button>
+		    </div>
+        <div class="flex flex-col">
+            <textarea class="bg-linear-to-t to-yellow-500 from-rose-500" id="shlop" rows="20" cols="45" placeholder="Database Results"></textarea>
+            <button class="bg-black text-white" onclick="query_shlop()">Query</button>
+		    </div>
+    </body>
+</html>
+```
 
 Similar to the `query` function, the `login` function makes http request as well, but the
 difference is the login makes a `POST` request instead of a `GET` request.
@@ -96,8 +181,8 @@ The HTML of the webpage looks like this
 
 <html>
     <link rel="shortcut icon" type="image/x-icon" href="favicon.png">
- <link type="text/css" rel="stylesheet" href="common.css">
- <script type="text/javascript" src="common.js"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+	  <script type="text/javascript" src="common.js"></script>
     <head>
         <title>
             Access Control Project
@@ -105,17 +190,21 @@ The HTML of the webpage looks like this
     </head>
 
     <body>
-        <div class="content">
-            <label for="username">Username:</label>
-            <input id="username" placeholder="username"></input>
-            <label for="password">Password:</label>
-            <input id="password" placeholder="password"></input>
-            <p></p>
-            <button class="button" onclick="login()">login</button>
-  </div>
+        <div class="flex flex-col h-screen justify-center gap-4 content-center items-center bg-[url(https://imgs.search.brave.com/4ZAcmHiAHfIP0ymfoBY-OyCV3mmtqfhxyuLu5GR-5Kc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA2LzgwLzAzLzQ3/LzM2MF9GXzY4MDAz/NDcxOF8zSmo4M05X/ZU9pbmJYU3dKQUYw/enVMcEhQY1FDYUVI/Wi5qcGc)] bg-cover bg-center">
+          <div>
+            <label class="text-teal-200" for="username">Username:</label>
+            <input class="bg-blue-500" id="username" placeholder="username"></input>
+          </div>
+          <div>
+            <label class= "text-teal-200" for="password">Password:</label>
+            <input class= "bg-blue-500" id="password" placeholder="password"></input>
+          </div>
+          <div>
+            <button class="bg-black text-white" onclick="login()">login</button>
+          </div>
+		</div>
     </body>
 </html>
-/html>
 ```
 
 The HTML that is rendered in the webpage is the login screen which a request to login can be made.
@@ -202,7 +291,7 @@ There are two backend servers that are run together to form our website, the `se
 
 ### Query route
 
-The server's `/query` route is described in the file `server-website/backend/index.js`.
+The server's `/query` routes are described in the file `server-website/backend/index.js`.
 
 ```Javascript
 app.get("/query/sludge", function (request, response) {
@@ -246,11 +335,103 @@ app.get("/query/sludge", function (request, response) {
     response.status(401).send("Token is invalid or expired");
   };
 });
-```
-There is a lot going on that is above the scope of this document. In simple terms, the token generated during TOTP is collected from the authorization headers, where it is then sent to be validated in the `/validateToken` route on the `server-users:80` route. If the token is not validated an error will throw, otherwise once the token is validated it'll send the response in the console of the token. This then allows the user in and makes a request to the MySQL server and prints the response which is then sent to the web browser.
+app.get("/query/goo", async function (request, response) {
+  // get token from headers
+  //send token to user-server for verification
+  //if not successgul, send 401
+  // if successful
+  // ==QUERY TOKEN VALIDATION==
 
-The query this runs is `const SQL = "SELECT * FROM sludge;"`
-this selects all data about sludge from the database.
+  const token = request.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return response.status(401).send("No token provided: /query/goo");
+  }
+
+  try {
+    fetch("http://" + "server-users:80" + "/validateToken", {
+      method: "POST",
+      headers: { 'Authorization': `Bearer ${token}` },
+    }).then(async resp => {
+
+      if (resp.status !== 200) {
+        console.log("Invalid token")
+        return response.status(401).send("Token is invalid or expired");
+      }
+
+      //using his isync/await instead of .then b/c I hate call-backs
+      const token = await resp.json()
+      console.log('Token validated:', token);
+      if (token.role != "admin") {
+        return response.status(401).send("Not allowed");
+      }
+
+      let SQL = "SELECT * FROM goo;"
+      connection.query(SQL, [true], (error, results, fields) => {
+        if (error) {
+          console.error(error.message);
+          response.status(500).send("database error");
+        } else {
+          console.log(results);
+          response.send(results);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Error validating token:', err.message);
+    response.status(401).send("Token is invalid or expired");
+  };
+});
+
+app.get("/query/shlop", function (request, response) {
+  // get token from headers
+  //send token to user-server for verification
+  //if not successgul, send 401
+  // if successful
+  // ==QUERY TOKEN VALIDATION==
+
+  const token = request.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return response.status(401).send("No token provided: /query/shlop");
+  }
+
+  try {
+    fetch("http://" + "server-users:80" + "/validateToken", {
+      method: "POST",
+      headers: { 'Authorization': `Bearer ${token}` },
+    }).then(async resp => {
+
+      if (resp.status !== 200) {
+        console.log("Invalid token")
+        return response.status(401).send("Token is invalid or expired");
+      }
+
+      const token = await resp.json()
+      if (token.role != "admin") {
+        return response.status(401).send("Not allowed");
+      }
+      console.log('Token validated:', resp.body);
+
+      let SQL = "SELECT * FROM shlop;"
+      connection.query(SQL, [true], (error, results, fields) => {
+        if (error) {
+          console.error(error.message);
+          response.status(500).send("database error");
+        } else {
+          console.log(results);
+          response.send(results);
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Error validating token:', err.message);
+    response.status(401).send("Token is invalid or expired");
+  };
+});
+```
+There is a lot going on that is above the scope of this document. In simple terms, the token generated during TOTP is collected from the authorization headers, where it is then sent to be validated in the `/validateToken` route on the `server-users:80` route. If the token is not validated an error will throw, otherwise once the token is validated it'll send the response in the console of the token. This then allows the user in and makes a request to the MySQL server and prints the response which is then sent to the web browser. 
+
+This is done for each of the different gunk databases, those being `sludge`, `goo`, and `slop`, with each having their respective sections on the `/query` route. Only certain roles are allowed to access certain data on the query route as added security to the websites data.
+The query each runs is `let SQL = "SELECT * FROM _____;"` where _____ is each of the databases, this selects all data about each gunk.
 
 ### Login Route
 
@@ -367,7 +548,7 @@ This code alternates every 30 seconds. Once the user submits the correct totp co
 
 ### Token Validation
 
-The token validation route is used in the query route to validate the logged in users JWT token when they successfully pass in a valid two factor code. This takes in the JWT token from the headers and checks if the token exists, if not it will throw a not provided error. If the token is taken in, it will be verified using the jsonwebtoken function verify() to verify the users token. It will then append the users role to the token output before sending the decoded token back to the query route on a successful 200 status. There are many ways implemented to catch errors as well as checks to ensure the token is validated correctly.
+The token validation route is used in the query route to validate the logged in users JWT token when they successfully pass in a valid two factor code. This takes in the JWT token from the headers and checks if the token exists, if not it will throw a not provided error. If the token is taken in, it will be verified using the jsonwebtoken function verify() to verify the users token. The route will then verify the user that is logged in exists in the database before appending the users role to the token. Using `bcrypt` this token value is compared with the matching password in the database to verify the user, then on a successful verification it sends a `Token is valid` flag back to query.
 
 ```JavaScript
 app.post("/validateToken", function (request, response) {
@@ -420,6 +601,8 @@ Below is a sample picture of the token being validated:
 
 ## Database
 
+
+### Users Table
 The databases can be best described by looking their code.
 The SQL user database schema is described in `sql-users/users.sql`.
 
@@ -431,24 +614,36 @@ use users;
 CREATE TABLE users (
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    salt     VARCHAR(255) NOT NULL,
+    salt     VARCHAR(4)   NOT NULL,
     email    VARCHAR(255) NOT NULL,
+    role     ENUM("admin","editor","subscriber")  NOT NULL,
     PRIMARY KEY (username)
+);
+ 
+INSERT INTO users
+VALUES(
+    "user",
+    "pass", -- make bcrypt password with the salt and pepper
+    "hm84",
+    "user@example.com",
+     0--role
 );
 
 INSERT INTO users
 VALUES(
-    "user",
-    "pass",
+    "user2",
+    "pass2", -- make bcrypt password with the salt and pepper
     "hm84",
-    "user@example.com"
+    "user2@example.com",
+     1--role
 );
 ```
 
-The database, named `users` has one table called `users` which has exactly one row.
-We store the salt along with the password which is then used to check the appropriate associated hash with bcrypt.
+The `users` database contains a list of users classified by a username, password, salt, email, and role. We store the salt along with the password for matching the users hash using bcrypt for login security. The user roles consist of `Admin`, `editor`, and `subscriber` where each role has a certain number of priveledges when querying the database, with `Admin` having the most priveledges. Two example users with varying roles are shown in the code above.
 
-The other database `sql-website/sludge.sql` holds information on our sludge values
+### Sludge Table
+
+The other database `sql-website/sludge.sql` holds information on our sludge, goo, and slop values
 
 ```SQL
 CREATE DATABASE sludge;
@@ -462,11 +657,21 @@ CREATE TABLE sludge (
   grossness VARCHAR(250)
 );
 
-INSERT INTO sludge (
-  density,
-  color,
-  grossness
-) VALUES (250,'red','very');
+CREATE TABLE goo (
+  id  INT PRIMARY KEY AUTO_INCREMENT,
+  density INT,
+  ooziness INT,
+  color VARCHAR(250),
+  grossness VARCHAR(250)
+);
+
+CREATE TABLE shlop (
+  id  INT PRIMARY KEY AUTO_INCREMENT,
+  density INT,
+  color VARCHAR(250),
+  grossness VARCHAR(250),
+  trashiness INT
+);
 ```
-This is the data that is seen when performing a query on the query route.
+These tables each hold varying information for different types of gunk, and the values these tables hold are shown above.
 
