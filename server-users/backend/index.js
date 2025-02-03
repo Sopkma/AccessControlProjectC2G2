@@ -5,6 +5,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const { createHmac } = require('crypto');
 const fetch = require('node-fetch');
+const { v4: uuidv4 } = require('uuid')
 
 const PORT = String(process.env.PORT);
 const HOST = String(process.env.HOST);
@@ -145,6 +146,39 @@ app.post("/validateToken", function (request, response) {
     }
   });
 });
+
+app.post("/log", async (req, resp) => {
+  const log = req.body;
+  if (!log.username || !log.ts || !log.datatype || !log.status) {
+    resp.status(400).send("Bad Request");
+    return;
+  }
+
+  let SQL = "INSERT INTO logs VALUES (?,?,?,?,?);";
+  const [error, results] = await connection.query(SQL, [uuidv4(), log.ts, log.username, log.datatype, log.status])
+  if (error) {
+    console.log("Error", error);
+    resp.status(500).send("Server Error");
+    return;
+  }
+  console.log("Success", results);
+  resp.status(200).send("Successfully logged");
+  return;
+})
+
+
+app.get("/logs", async (req, resp) => {
+  let SQL = "SELECT * FROM logs;";
+  const [error, results] = await connection.query(SQL, null)
+  if (error) {
+    console.log("Error", error);
+    resp.status(500).send("Server Error");
+    return;
+  }
+  console.log("Success, grabbed all users");
+  resp.status(200).json(results);
+  return;
+})
 
 app.listen(PORT, HOST)
 console.log(`Running on http://${HOST}:${PORT}`)
