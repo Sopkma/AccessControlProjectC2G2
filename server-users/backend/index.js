@@ -147,37 +147,40 @@ app.post("/validateToken", function (request, response) {
   });
 });
 
-app.post("/log", async (req, resp) => {
+app.post("/log", (req, resp) => {
   const log = req.body;
-  if (!log.username || !log.ts || !log.datatype || !log.status) {
+  if (!log.hasOwnProperty('username') || !log.hasOwnProperty('ts') || !log.hasOwnProperty('datatype') || !log.hasOwnProperty('status')) {
+    console.log("Error invalid log", JSON.stringify(log));
     resp.status(400).send("Bad Request");
     return;
   }
 
   let SQL = "INSERT INTO logs VALUES (?,?,?,?,?);";
-  const [error, results] = await connection.query(SQL, [uuidv4(), log.ts, log.username, log.datatype, log.status])
-  if (error) {
-    console.log("Error", error);
-    resp.status(500).send("Server Error");
+  connection.query(SQL, [uuidv4(), new Date(log.ts), log.username, log.datatype, Number(log.status)], (error, results) => {
+    if (error) {
+      console.log("Error", error);
+      resp.status(500).send("Server Error");
+      return;
+    }
+    console.log("Success", results);
+    resp.status(200).send("Successfully logged");
     return;
-  }
-  console.log("Success", results);
-  resp.status(200).send("Successfully logged");
-  return;
+  })
 })
 
 
 app.get("/logs", async (req, resp) => {
   let SQL = "SELECT * FROM logs;";
-  const [error, results] = await connection.query(SQL, null)
-  if (error) {
-    console.log("Error", error);
-    resp.status(500).send("Server Error");
+  connection.query(SQL, null, (error, results) => {
+    if (error) {
+      console.log("Error", error);
+      resp.status(500).send("Server Error");
+      return;
+    }
+    console.log("Success, grabbed all logs");
+    resp.status(200).json(results);
     return;
-  }
-  console.log("Success, grabbed all users");
-  resp.status(200).json(results);
-  return;
+  })
 })
 
 app.listen(PORT, HOST)

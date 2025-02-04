@@ -79,6 +79,32 @@ function query_goo() {
     })
 }
 
+function query_logs() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/logs", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
+    .then((resp) => resp.text())
+    .then((data) => {
+      document.getElementById("logs").innerHTML = data;
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+
 function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;

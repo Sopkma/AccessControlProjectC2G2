@@ -12,8 +12,8 @@ CREATE TABLE users (
 );
 
 CREATE TABLE logs (
-    id INT,
-    ts TIMESTAMP NOT NULL,
+    id VARCHAR(255),
+    ts DATETIME NOT NULL,
     username VARCHAR(255) NOT NULL,
     datatype VARCHAR(255) NOT NULL,
     status     ENUM("success","failure")  NOT NULL,

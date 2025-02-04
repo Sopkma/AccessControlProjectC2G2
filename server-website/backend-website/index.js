@@ -21,6 +21,21 @@ let connection = mysql.createConnection({
   database: "sludge"
 });
 
+async function log(datatype, username, issuccess) {
+  const log = {
+    ts: new Date(),
+    username,
+    datatype,
+    status: issuccess
+  };
+
+  console.log("Logging request")
+  return resp = await fetch("http://" + "server-users:80" + "/log", {
+    method: "POST",
+    headers: { 'Content-Type': `application/json` },
+    body: JSON.stringify(log)
+  })
+}
 
 app.use("/", express.static("frontend"));
 
@@ -45,25 +60,32 @@ app.get("/query/sludge", function (request, response) {
 
       if (resp.status !== 200) {
         console.log("Invalid token")
+        log("sludge", "unknown", 2)
         return response.status(401).send("Token is invalid or expired");
       }
 
       console.log('Token validated:', resp.body);
 
+
       let SQL = "SELECT * FROM sludge;"
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);
-          response.status(500).send("database error");
+          log("sludge", token.username, 2)
+          return response.status(500).send("database error");
         } else {
+          log("sludge", token.username, 1)
           console.log(results);
-          response.send(results);
+          return response.send(results);
         }
       });
+
+
     });
   } catch (err) {
+    log("sludge", "unknown", 2)
     console.error('Error validating token:', err.message);
-    response.status(401).send("Token is invalid or expired");
+    return response.status(401).send("Token is invalid or expired");
   };
 });
 
@@ -87,6 +109,7 @@ app.get("/query/goo", async function (request, response) {
 
       if (resp.status !== 200) {
         console.log("Invalid token")
+        log("goo", "uknown", 2)
         return response.status(401).send("Token is invalid or expired");
       }
 
@@ -94,23 +117,28 @@ app.get("/query/goo", async function (request, response) {
       const token = await resp.json()
       console.log('Token validated:', token);
       if (token.role != "admin") {
+        log("goo", token.username, 2)
         return response.status(401).send("Not allowed");
+        log("unknown", token.username, 0)
       }
 
       let SQL = "SELECT * FROM goo;"
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);
-          response.status(500).send("database error");
+          log("goo", token.username, 2)
+          return response.status(500).send("database error");
         } else {
           console.log(results);
-          response.send(results);
+          log("goo", token.username, 1)
+          return response.send(results);
         }
       });
     });
   } catch (err) {
     console.error('Error validating token:', err.message);
-    response.status(401).send("Token is invalid or expired");
+    log("goo", "uknown", 2)
+    return response.status(401).send("Token is invalid or expired");
   };
 });
 
@@ -123,6 +151,7 @@ app.get("/query/shlop", function (request, response) {
 
   const token = request.headers['authorization']?.split(' ')[1];
   if (!token) {
+    log("shlop", "unknown", 2)
     return response.status(401).send("No token provided: /query/shlop");
   }
 
@@ -134,11 +163,13 @@ app.get("/query/shlop", function (request, response) {
 
       if (resp.status !== 200) {
         console.log("Invalid token")
+        log("shlop", "unknown", 2)
         return response.status(401).send("Token is invalid or expired");
       }
 
       const token = await resp.json()
       if (token.role != "admin") {
+        log("shlop", token.username, 2)
         return response.status(401).send("Not allowed");
       }
       console.log('Token validated:', resp.body);
@@ -147,19 +178,58 @@ app.get("/query/shlop", function (request, response) {
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);
+          log("shlop", token.username, 2)
           response.status(500).send("database error");
         } else {
           console.log(results);
+          log("shlop", token.username, 1)
           response.send(results);
         }
       });
     });
   } catch (err) {
     console.error('Error validating token:', err.message);
+    log("shlop", "unknown", 2)
     response.status(401).send("Token is invalid or expired");
   };
 });
 
+app.get("/query/logs", function (request, response) {
+
+  const token = request.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    log("logs", "unknown", 2)
+    return response.status(401).send("No token provided: /query/logs");
+  }
+
+  try {
+    fetch("http://" + "server-users:80" + "/validateToken", {
+      method: "POST",
+      headers: { 'Authorization': `Bearer ${token}` },
+    }).then(async resp => {
+
+      if (resp.status !== 200) {
+        console.log("Invalid token")
+        log("logs", "unknown", 2)
+        return response.status(401).send("Token is invalid or expired");
+      }
+
+      const token = await resp.json()
+      if (token.role != "admin") {
+        log("log", token.username, 2)
+        return response.status(401).send("Not allowed");
+      }
+      log("logs", token.username, 1)
+      const respo = await fetch("http://" + "server-users:80" + "/logs", { method: "GET" });
+      const logs = await respo.json();
+      response.status(200).send(logs)
+    })
+  } catch (err) {
+    console.error('Error validating token:', err.message);
+    log("shlop", "unknown", 2)
+    response.status(401).send("Token is invalid or expired");
+  };
+});
 
 app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
