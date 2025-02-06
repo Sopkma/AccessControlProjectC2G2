@@ -128,6 +128,7 @@ The HTML for this section of the website is shown below:
             <textarea class="bg-linear-to-t to-yellow-500 from-rose-500" id="shlop" rows="20" cols="45" placeholder="Database Results"></textarea>
             <button class="bg-black text-white" onclick="query_shlop()">Query</button>
 		    </div>
+    <a href="admin.html">For the admin site</a>
     </body>
 </html>
 ```
@@ -282,6 +283,72 @@ function getCookie(name) {
 ````
 Where it'll take in a name, compare that to a key, and then return the associated value of the key, value pair.
 
+### Logging
+
+Within the `common.js` file, there also contains the function for logging. This is where the logs of query functions are processed and posted to the `/query/logs` section of the website.
+
+```JavaScript
+function query_logs() {
+  // get token from cookie
+  const token = getCookie("token");
+
+  if (!token) {
+    alert("No token provided: query()");
+    return;
+  }
+
+  const headers = new Headers();
+  headers.append('Authorization', `Bearer ${token}`);
+
+  fetch("http://" + parsedUrl.host + "/query/logs", {
+    method: "GET",
+    mode: "cors",
+    headers: headers
+  })
+    .then((resp) => resp.text())
+    .then((data) => {
+      document.getElementById("logs").innerHTML = data;
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+}
+```
+
+This function is only called on in the data analyst section of the website, which only users with the `admin` role are allowed to reach. The formatting of this section is shown below:
+
+```HTML
+<!DOCTYPE html>
+
+<html>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.png">
+	<script type="text/javascript" src="common.js"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <head>
+        <title>
+            Access Control Project
+        </title>
+    </head>
+
+    <body class="flex flex-row h-screen justify-center gap-4 content-center items-center bg-[url(https://imgs.search.brave.com/_LDzlTA3Oc-RJzIoJM49sfy-c1jbYHTiTZLSBPlsw0Q/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAzLzc1LzMwLzI1/LzI0MF9GXzM3NTMw/MjUyNl9GTUNDcXpY/UmE0bGcyZHNPV28w/RVBRZTI0am9WOTFz/RS5qcGc)] bg-cover bg-center">
+        <div class="flex flex-col">
+            <textarea class="bg-linear-to-t to-lime-500 from-purple-500" id="logs" rows="20" cols="45" placeholder="Database Results"></textarea>
+            <button class="bg-black text-white" onclick="query_logs()">Query</button>
+		    </div>
+    </body>
+```
+This section will show the logs of all users for data analyzing purposes, which have been process and posted here from the backend.
+
+
+![With no Logs](https://github.com/user-attachments/assets/19212509-2c1f-4f50-a0bc-f7897c752272)
+<br>
+
+
+![With Logs](https://github.com/user-attachments/assets/2426fbe9-a6fd-4734-aab7-8b0be19bdae3)
+<br>
+
+
+
 ## Backend/API
 
 There are two backend servers that are run together to form our website, the `server-website` backend and the `server-users` backend as can be seen in the terminal.
@@ -291,12 +358,12 @@ There are two backend servers that are run together to form our website, the `se
 
 ### Query route
 
-The server's `/query` routes are described in the file `server-website/backend/index.js`.
+The server's `/query` routes are described in the file `server-website/backend-website/index.js`.
 
 ```Javascript
 app.get("/query/sludge", function (request, response) {
   // get token from headers
-  // send token to user-server for verification
+  //send token to user-server for verification
   //if not successgul, send 401
   // if successful
   // ==QUERY TOKEN VALIDATION==
@@ -314,27 +381,35 @@ app.get("/query/sludge", function (request, response) {
 
       if (resp.status !== 200) {
         console.log("Invalid token")
+        log("sludge", "unknown", 2)
         return response.status(401).send("Token is invalid or expired");
       }
 
       console.log('Token validated:', resp.body);
 
+
       let SQL = "SELECT * FROM sludge;"
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);
-          response.status(500).send("database error");
+          log("sludge", token.username, 2)
+          return response.status(500).send("database error");
         } else {
+          log("sludge", token.username, 1)
           console.log(results);
-          response.send(results);
+          return response.send(results);
         }
       });
+
+
     });
   } catch (err) {
+    log("sludge", "unknown", 2)
     console.error('Error validating token:', err.message);
-    response.status(401).send("Token is invalid or expired");
+    return response.status(401).send("Token is invalid or expired");
   };
 });
+
 app.get("/query/goo", async function (request, response) {
   // get token from headers
   //send token to user-server for verification
@@ -355,6 +430,7 @@ app.get("/query/goo", async function (request, response) {
 
       if (resp.status !== 200) {
         console.log("Invalid token")
+        log("goo", "uknown", 2)
         return response.status(401).send("Token is invalid or expired");
       }
 
@@ -362,23 +438,28 @@ app.get("/query/goo", async function (request, response) {
       const token = await resp.json()
       console.log('Token validated:', token);
       if (token.role != "admin") {
+        log("goo", token.username, 2)
         return response.status(401).send("Not allowed");
+        log("unknown", token.username, 0)
       }
 
       let SQL = "SELECT * FROM goo;"
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);
-          response.status(500).send("database error");
+          log("goo", token.username, 2)
+          return response.status(500).send("database error");
         } else {
           console.log(results);
-          response.send(results);
+          log("goo", token.username, 1)
+          return response.send(results);
         }
       });
     });
   } catch (err) {
     console.error('Error validating token:', err.message);
-    response.status(401).send("Token is invalid or expired");
+    log("goo", "uknown", 2)
+    return response.status(401).send("Token is invalid or expired");
   };
 });
 
@@ -391,6 +472,7 @@ app.get("/query/shlop", function (request, response) {
 
   const token = request.headers['authorization']?.split(' ')[1];
   if (!token) {
+    log("shlop", "unknown", 2)
     return response.status(401).send("No token provided: /query/shlop");
   }
 
@@ -402,11 +484,13 @@ app.get("/query/shlop", function (request, response) {
 
       if (resp.status !== 200) {
         console.log("Invalid token")
+        log("shlop", "unknown", 2)
         return response.status(401).send("Token is invalid or expired");
       }
 
       const token = await resp.json()
       if (token.role != "admin") {
+        log("shlop", token.username, 2)
         return response.status(401).send("Not allowed");
       }
       console.log('Token validated:', resp.body);
@@ -415,23 +499,88 @@ app.get("/query/shlop", function (request, response) {
       connection.query(SQL, [true], (error, results, fields) => {
         if (error) {
           console.error(error.message);
+          log("shlop", token.username, 2)
           response.status(500).send("database error");
         } else {
           console.log(results);
+          log("shlop", token.username, 1)
           response.send(results);
         }
       });
     });
   } catch (err) {
     console.error('Error validating token:', err.message);
+    log("shlop", "unknown", 2)
     response.status(401).send("Token is invalid or expired");
   };
 });
 ```
-There is a lot going on that is above the scope of this document. In simple terms, the token generated during TOTP is collected from the authorization headers, where it is then sent to be validated in the `/validateToken` route on the `server-users:80` route. If the token is not validated an error will throw, otherwise once the token is validated it'll send the response in the console of the token. This then allows the user in and makes a request to the MySQL server and prints the response which is then sent to the web browser. 
+There is a lot going on that is above the scope of this document. In simple terms, the token generated during TOTP is collected from the authorization headers, where it is then sent to be validated in the `/validateToken` route on the `server-users:80` route. If the token is not validated an error will throw and be logged into the logs database, otherwise once the token is validated it'll send the response in the console of the token and also send the results to the logs database. This then allows the user in and makes a request to the MySQL server and prints the response which is then sent to the web browser. 
 
 This is done for each of the different gunk databases, those being `sludge`, `goo`, and `slop`, with each having their respective sections on the `/query` route. Only certain roles are allowed to access certain data on the query route as added security to the websites data.
 The query each runs is `let SQL = "SELECT * FROM _____;"` where _____ is each of the databases, this selects all data about each gunk.
+
+### Logging
+
+To capture the logging from the frontend, we use a `log` function to place any thrown errors from the different queries into the logging website for later data analysis. This part of the logging system resides in `server-website/backend-website/index.js`.
+
+```JavaScript
+async function log(datatype, username, issuccess) {
+  const log = {
+    ts: new Date(),
+    username,
+    datatype,
+    status: issuccess
+  };
+
+  console.log("Logging request")
+  return resp = await fetch("http://" + "server-users:80" + "/log", {
+    method: "POST",
+    headers: { 'Content-Type': `application/json` },
+    body: JSON.stringify(log)
+  })
+}
+```
+The next part of the logging system resides in the `server-users/backend/index.js` which consists of the `app.get` and `app.post` conditions of the log section of the website.
+
+```JavaScript
+app.post("/log", (req, resp) => {
+  const log = req.body;
+  if (!log.hasOwnProperty('username') || !log.hasOwnProperty('ts') || !log.hasOwnProperty('datatype') || !log.hasOwnProperty('status')) {
+    console.log("Error invalid log", JSON.stringify(log));
+    resp.status(400).send("Bad Request");
+    return;
+  }
+
+  let SQL = "INSERT INTO logs VALUES (?,?,?,?,?);";
+  connection.query(SQL, [uuidv4(), new Date(log.ts), log.username, log.datatype, Number(log.status)], (error, results) => {
+    if (error) {
+      console.log("Error", error);
+      resp.status(500).send("Server Error");
+      return;
+    }
+    console.log("Success", results);
+    resp.status(200).send("Successfully logged");
+    return;
+  })
+})
+
+
+app.get("/logs", async (req, resp) => {
+  let SQL = "SELECT * FROM logs;";
+  connection.query(SQL, null, (error, results) => {
+    if (error) {
+      console.log("Error", error);
+      resp.status(500).send("Server Error");
+      return;
+    }
+    console.log("Success, grabbed all logs");
+    resp.status(200).json(results);
+    return;
+  })
+})
+```
+This is where the logging website will grab all of the current logs in the database and post them to the site for data analysis.
 
 ### Login Route
 
@@ -619,6 +768,15 @@ CREATE TABLE users (
     role     ENUM("admin","editor","subscriber")  NOT NULL,
     PRIMARY KEY (username)
 );
+
+CREATE TABLE logs (
+    id VARCHAR(255),
+    ts DATETIME NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    datatype VARCHAR(255) NOT NULL,
+    status     ENUM("success","failure")  NOT NULL,
+    PRIMARY KEY (id)
+);
  
 INSERT INTO users
 VALUES(
@@ -639,7 +797,7 @@ VALUES(
 );
 ```
 
-The `users` database contains a list of users classified by a username, password, salt, email, and role. We store the salt along with the password for matching the users hash using bcrypt for login security. The user roles consist of `Admin`, `editor`, and `subscriber` where each role has a certain number of priveledges when querying the database, with `Admin` having the most priveledges. Two example users with varying roles are shown in the code above.
+The `users` database contains a list of users classified by a username, password, salt, email, and role. We store the salt along with the password for matching the users hash using bcrypt for login security. The user roles consist of `Admin`, `editor`, and `subscriber` where each role has a certain number of priveledges when querying the database, with `Admin` having the most priveledges. Two example users with varying roles are shown in the code above. The `users` database also contains the table for collecting the websites logs, which comprises of the log `ID`, the `timestamp`, the `username` the log is associated with, the `datatype`, and the `status` which is either a success or failure.
 
 ### Sludge Table
 
