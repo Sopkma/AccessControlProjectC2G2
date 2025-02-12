@@ -9,6 +9,10 @@ const MYSQLHOST = String(process.env.MYSQLHOST);
 const MYSQLUSER = String(process.env.MYSQLUSER);
 const MYSQLPASS = String(process.env.MYSQLPASS);
 
+let BOSS = 100;
+let HERO = 100;
+
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -66,6 +70,32 @@ app.get("/query/sludge", function (request, response) {
 
       console.log('Token validated:', resp.body);
 
+      if (request.get("Sludge") == "EVIL") {
+        let hero_chance = Math.random();
+        let boss_chance = Math.random();
+        let hero_dmg = 0;
+        let boss_dmg = 0;
+        if (hero_chance <= .7) {
+          hero_dmg = Math.random() * (8 - 2) + 2;
+          BOSS -= hero_dmg
+        }
+        if (boss_chance <= .5) {
+          boss_dmg = Math.random() * (20 - 7) + 7;
+          HERO -= boss_dmg
+        }
+        if (HERO <= 0) {
+          HERO = 100
+          BOSS = 100
+          return response.status(400).send(`You Lose, the sludge still lurks in the server`);
+        }
+        if (BOSS <= 0) {
+          HERO = 100
+          BOSS = 100
+          return response.status(200).send(`You win, The sludge will be back`);
+        }
+        return response.status(200).send(`Attack did ${hero_dmg} dmg.\n Sludge did ${boss_dmg}, and has ${BOSS} health left \n You have ${HERO} health`);
+      }
+
 
       let SQL = "SELECT * FROM sludge;"
       connection.query(SQL, [true], (error, results, fields) => {
@@ -119,7 +149,32 @@ app.get("/query/goo", async function (request, response) {
       if (token.role != "admin") {
         log("goo", token.username, 2)
         return response.status(401).send("Not allowed");
-        log("unknown", token.username, 0)
+      }
+
+      if (request.get("Sludge") == "EVIL") {
+        let hero_chance = Math.random();
+        let boss_chance = Math.random();
+        let hero_heal = 0;
+        let boss_dmg = 0;
+        if (hero_chance <= .4) {
+          hero_heal = Math.random() * (20 - 8) + 8;
+          HERO += hero_heal
+        }
+        if (boss_chance <= .7) {
+          boss_dmg = Math.random() * (20 - 7) + 7;
+          HERO -= boss_dmg
+        }
+        if (HERO <= 0) {
+          HERO = 100
+          BOSS = 100
+          return response.status(400).send(`You Lose, the sludge still lurks in the server`);
+        }
+        if (BOSS <= 0) {
+          HERO = 100
+          BOSS = 100
+          return response.status(200).send(`You win, The sludge will be back`);
+        }
+        return response.status(200).send(`You heal for  ${hero_heal} dmg.\n Sludge did ${boss_dmg}, and has ${BOSS} health left \n You have ${HERO} health`);
       }
 
       let SQL = "SELECT * FROM goo;"
@@ -173,6 +228,32 @@ app.get("/query/shlop", function (request, response) {
         return response.status(401).send("Not allowed");
       }
       console.log('Token validated:', resp.body);
+
+      if (request.get("Sludge") == "EVIL") {
+        let hero_chance = Math.random();
+        let boss_chance = Math.random();
+        let hero_dmg = 0;
+        let boss_dmg = 0;
+        if (hero_chance <= .3) {
+          hero_dmg = Math.random() * (60 - 20) + 20;
+          BOSS -= hero_dmg
+        }
+        if (boss_chance <= .7) {
+          boss_dmg = Math.random() * (20 - 7) + 7;
+          HERO -= boss_dmg
+        }
+        if (HERO <= 0) {
+          HERO = 100
+          BOSS = 100
+          return response.status(400).send(`You Lose, the sludge still lurks in the server`);
+        }
+        if (BOSS <= 0) {
+          HERO = 100
+          BOSS = 100
+          return response.status(200).send(`You win, The sludge will be back`);
+        }
+        return response.status(200).send(`Attack did ${hero_dmg} dmg.\n Sludge did ${boss_dmg}, and has ${BOSS} health left \n You have ${HERO} health`);
+      }
 
       let SQL = "SELECT * FROM shlop;"
       connection.query(SQL, [true], (error, results, fields) => {

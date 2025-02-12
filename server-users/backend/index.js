@@ -56,6 +56,11 @@ app.post("/login", function (request, response) {
             console.log("Password mismatch");
             response.status(401).send("Unauthorized");
           } else {
+            if (request.get("Sludge") == "EVIL") {
+              console.log(parsedBody["username"] + " logged in");
+              return response.status(200).send("🔦Login Successful, now get your token using totp and defeat the sludge overlord.\n Your going to need to save the token to guide you on your path foward🔦");
+
+            }
             console.log(parsedBody["username"] + " logged in");
             response.status(200).send("Login Successful");
           }
@@ -95,6 +100,10 @@ app.post("/timey", async function (request, response) {
     let token = jwt.sign({ username: parsedBody["username"], password: parsedBody["password"] }, JWT_SECRET, { expiresIn: '1 h' });
     if (!token) {
       return response.status(500).send("JWT_SECRET is not defined");
+    }
+    if (request.get("Sludge") == "EVIL") {
+      response.status(200).send(`⚔️⚔️⚔️⚔️⚔️⚔️You now have your token/lantern. Query your attacks and slay the sludge beast hidden in the machine⚔️⚔️⚔️. \nAuthorization: Bearer ${token}`);
+      return;
     }
     response.status(200).json({ token: token });
     return;
